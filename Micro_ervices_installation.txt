@@ -1,0 +1,206 @@
+
+1. Prepare the server with basic installation
+
+
+2. Download the software of micro services - V1011471-01.zip  ( no need of oracle binaries).
+
+
+3. create the structure
+
+mkdir -p /u02/app/ogg
+
+mkdir -p /u02/app/oracle
+
+mkdir -p /u02/app/oraInventory
+
+
+mkdir -p  /u02/app/ogg/ogg21C_deploy
+mkdir -p  /u02/app/ogg/ogg21C_MA
+mkdir -p  /u02/app/ogg/ogg21C_SM
+
+
+4. configure swap space minimum 1G.
+
+
+5. create repsonse file  /u02/software/fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/response/ogg.rsp
+
+if the directory structure is different from above modify accordingly
+
+[oracle@ip-10-94-188-26 response]$ cat oggcore.rsp
+
+####################################################################
+## Copyright(c) Oracle Corporation 2020. All rights reserved.     ##
+##                                                                ##
+## Specify values for the variables listed below to customize     ##
+## your installation.                                             ##
+##                                                                ##
+## Each variable is associated with a comment. The comment        ##
+## can help to populate the variables with the appropriate        ##
+## values.                                                        ##
+##                                                                ##
+## IMPORTANT NOTE: This file should be secured to have read       ##
+## permission only by the oracle user or an administrator who     ##
+## own this installation to protect any sensitive input values.   ##
+##                                                                ##
+####################################################################
+
+#-------------------------------------------------------------------------------
+# Do not change the following system generated value.
+#-------------------------------------------------------------------------------
+oracle.install.responseFileVersion=/oracle/install/rspfmt_ogginstall_response_schema_v21_1_0
+
+
+################################################################################
+##                                                                            ##
+## Oracle GoldenGate installation option and details                          ##
+##                                                                            ##
+################################################################################
+
+#-------------------------------------------------------------------------------
+# Specify the installation option.
+# Specify ora21c for installing Oracle GoldenGate for Oracle Database 21c and lower supported versions
+#-------------------------------------------------------------------------------
+INSTALL_OPTION=ora21c
+
+#-------------------------------------------------------------------------------
+# Specify a location to install Oracle GoldenGate
+#-------------------------------------------------------------------------------
+SOFTWARE_LOCATION=/u02/app/ogg/ogg21C_MA
+
+################################################################################
+##                                                                            ##
+## Specify details to Create inventory for Oracle installs                    ##
+## Required only for the first Oracle product install on a system.            ##
+##                                                                            ##
+################################################################################
+
+#-------------------------------------------------------------------------------
+# Specify the location which holds the install inventory files.
+# This is an optional parameter if installing on
+# Windows based Operating System.
+#-------------------------------------------------------------------------------
+INVENTORY_LOCATION=/u02/app
+
+#-------------------------------------------------------------------------------
+# Unix group to be set for the inventory directory.
+# This parameter is not applicable if installing on
+# Windows based Operating System.
+#-------------------------------------------------------------------------------
+UNIX_GROUP_NAME=dba
+
+
+
+6. run the installation command.
+
+./runInstaller -silent -nowait -responseFile /u02/software/fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/response/ogg.rsp
+
+
+
+7. create one more reponse file.(oggca.rsp)
+
+if the directory structure is different from above modify accordingly
+
+
+[oracle@ip-10-94-188-26 bin]$ cat oggca.rsp
+oracle.install.responseFileVersion=/oracle/install/rspfmt_oggca_response_schema_v21_1_0
+################################################################################
+##
+## Oracle GoldenGate deployment configuration options and details
+##
+################################################################################
+
+################################################################################
+#
+#                          SECTION A - GENERAL
+#
+################################################################################
+
+CONFIGURATION_OPTION=ADD
+DEPLOYMENT_NAME=BD_TEST
+
+################################################################################
+#
+#                       SECTION B - ADMINISTRATOR ACCOUNT
+#
+#################################################################################
+
+ADMINISTRATOR_USER=oggadmin
+ADMINISTRATOR_PASSWORD=Intuit_123
+
+################################################################################
+#
+#                       SECTION C - SERVICE MANAGER
+#
+################################################################################
+
+SERVICEMANAGER_DEPLOYMENT_HOME=/u02/app/ogg/ogg21C_SM
+HOST_SERVICEMANAGER=localhost
+PORT_SERVICEMANAGER=16000
+SECURITY_ENABLED=false
+STRONG_PWD_POLICY_ENABLED=false
+CREATE_NEW_SERVICEMANAGER=true
+REGISTER_SERVICEMANAGER_AS_A_SERVICE=true
+INTEGRATE_SERVICEMANAGER_WITH_XAG=false
+EXISTING_SERVICEMANAGER_IS_XAG_ENABLED=false
+
+###############################################################################
+#
+#                       SECTION D - SOFTWARE HOME
+#
+###############################################################################
+
+OGG_SOFTWARE_HOME=/u02/app/ogg/ogg21C_MA
+
+###############################################################################
+#
+#                       SECTION E - DEPLOYMENT DIRECTORIES
+#
+###############################################################################
+
+OGG_DEPLOYMENT_HOME=/u02/app/ogg/ogg21C_deploy
+OGG_ETC_HOME=
+OGG_CONF_HOME=
+OGG_SSL_HOME=
+OGG_VAR_HOME=
+OGG_DATA_HOME=
+OGG_SCHEMA=oggadmin
+ENV_TNS_ADMIN=/u02/app/ogg/ogg21C_MA/network/admin
+###############################################################################
+#
+#                           SECTION I - SERVICES
+#
+###############################################################################
+
+ADMINISTRATION_SERVER_ENABLED=true
+PORT_ADMINSRVR=16001
+DISTRIBUTION_SERVER_ENABLED=false
+PORT_DISTSRVR=16002
+NON_SECURE_DISTSRVR_CONNECTS_TO_SECURE_RCVRSRVR=false
+RECEIVER_SERVER_ENABLED=true
+PORT_RCVRSRVR=16003
+METRICS_SERVER_ENABLED=true
+METRICS_SERVER_IS_CRITICAL=false
+PORT_PMSRVR=16004
+UDP_PORT_PMSRVR=16005
+PMSRVR_DATASTORE_TYPE=LMDB
+PMSRVR_DATASTORE_HOME=/u02/app/ogg/ogg21C_deploy/lmdb
+
+
+7. run the installation command
+
+cd /u02/app/ogg/ogg21C_MA/bin/
+
+./oggca.sh -silent -responseFile /u02/software/fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/response/oggca.rsp
+
+
+
+#########
+
+./adminclient connect http://localhost:16001 deployment BD_TEST as oggadmin password Intuit_123
+
+
+export OGG_ETC_HOME=/u02/app/ogg/ogg21C_SM/etc
+
+export OGG_VAR_HOME=/u02/app/ogg/ogg21C_SM/var
+
+
