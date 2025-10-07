@@ -1,0 +1,138 @@
+DIRECTORY=DATA_PUMP_DIR DUMPFILE=2013.dmp LOGFILE=2013.log TABLES=XXRS.XXDMR_REV_SCHEDULES exclude=STATISTICS exclude=index FLASHBACK_SCN=13232461702511 QUERY=XXDMR_REV_SCHEDULES:"where CREATION_DATE >= TO_DATE('2013-12-31 00:00:00', 'YYYY-MM-DD HH24:mi:SS') AND CREATION_DATE <= TO_DATE('2013-12-31 23:59:59', 'YYYY-MM-DD HH24:mi:SS')" COMPRESSION=all
+
+
+
+
+
+Creeate table partition:
+========================
+
+-- webs.ep_transaction_history_part37 definition
+
+
+CREATE TABLE webs.ep_transaction_history_part38 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1200000000') TO ('1220000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part38 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part39 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1220000000') TO ('1240000000') TABLESPACE pg_default;; 
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part39 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part40 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1240000000') TO ('1260000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part40 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part41 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1260000000') TO ('1280000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part41 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part42 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1280000000') TO ('1300000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part42 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part43 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1300000000') TO ('1320000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part43 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part44 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1320000000') TO ('1340000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part44 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part45 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1340000000') TO ('1360000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part45 OWNER to postgres;
+
+
+CREATE TABLE webs.ep_transaction_history_part46 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1380000000') TO ('1400000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part38 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part47 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1400000000') TO ('1420000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part38 OWNER to postgres;
+
+CREATE TABLE webs.ep_transaction_history_part48 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1420000000') TO ('1440000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part48 OWNER to postgres;
+
+
+CREATE TABLE webs.ep_transaction_history_part49 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1440000000') TO ('1460000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part49 OWNER to postgres;
+
+
+CREATE TABLE webs.ep_transaction_history_part50 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1460000000') TO ('1480000000') TABLESPACE pg_default;;
+ALTER TABLE IF EXISTS webs.ep_transaction_history_part50 OWNER to postgres;
+
+
+UIP Replication :
+=================
+
+ALTER TABLE webs.ep_transaction_history_part38 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part39 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part40 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part41 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part42 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part43 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part44 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part45 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part46 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part47 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part48 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part49 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.ep_transaction_history_part50 REPLICA IDENTITY FULL;
+
+
+
+Creeate table partition:
+========================
+
+CREATE TABLE webs.transaction_history_part32 PARTITION OF webs.transaction_history FOR VALUES FROM ('1160000000') TO ('1200000000') TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS webs.transaction_history_part32 OWNER to postgres;
+
+CREATE TABLE webs.transaction_history_part33 PARTITION OF webs.transaction_history FOR VALUES FROM ('1200000000') TO ('1240000000') TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS webs.transaction_history_part33 OWNER to postgres;
+
+CREATE TABLE webs.transaction_history_part34 PARTITION OF webs.transaction_history FOR VALUES FROM ('1240000000') TO ('1280000000') TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS webs.transaction_history_part34 OWNER to postgres;
+
+
+UIP Replication :
+=================
+
+ALTER TABLE webs.transaction_history_part3 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.transaction_history_part33 REPLICA IDENTITY FULL;
+
+ALTER TABLE webs.transaction_history_part34 REPLICA IDENTITY FULL;
+
+
+
+
+
+CREATE INDEX ep_transaction_history_part36_transaction_history_addon_id_idx ON webs.ep_transaction_history_part37 USING btree (transaction_history_addon_id);
+CREATE INDEX ep_transaction_history_part36_transaction_history_id_idx ON webs.ep_transaction_history_part37 USING btree (transaction_history_id);
+CREATE UNIQUE INDEX ep_transaction_history_part36_transaction_history_id_transa_idx ON webs.ep_transaction_history_part37 USING btree (transaction_history_id, transaction_history_addon_id, entitled_product_id, ep_transaction_id);
+CREATE INDEX ep_transaction_history_part36_update_date_idx ON webs.ep_transaction_history_part37 USING btree (update_date);
+
+
+-- webs.ep_transaction_history_part37 foreign keys
+
+
+
+CREATE TABLE webs.ep_transaction_history_part36 PARTITION OF webs.ep_transaction_history  FOR VALUES FROM ('1160000000') TO ('1180000000');
+
+
+
+FOR VALUES FROM ('1180000000') TO ('1200000000')
+
+
+
+
+
+
+eiamCli aws_ssh  -a 593791714654 -p id_rsa -d ~/.ssh/
+ssh -i ~/.ssh/id_rsa -N -L 5443:websprf1-perf-c3.cluster-c6f3h163ix2r.us-west-2.rds.amazonaws.com:1521 spothu1@webspreprod ServerAliveInterval=250 ConnectTimeout 30
