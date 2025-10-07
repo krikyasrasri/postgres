@@ -1,0 +1,29 @@
+
+
+
+
+ALTER TABLE teller_event SET SCHEMA dbo;
+
+--------------------------------------------------------
+\dynamic sql/
+--------------------------------------------------------
+
+select 'alter table "' || tablename || '" set schema "chex70_uat";'from pg_tables 
+where schemaname='public';
+
+-----------------------------------------------------
+change the owner of schema
+
+-----------------------------------------------------
+SELECT 'ALTER TABLE '|| schemaname || '.' || tablename ||' OWNER TO edesk50_uat;'
+FROM pg_tables WHERE NOT schemaname IN ('pg_catalog', 'information_schema')
+ORDER BY schemaname, tablename;
+
+-----------------------------------------------------
+drop all tables from schema with dependent objects.
+----------------------------------------------
+
+
+
+select 'drop table if exists "' || tablename || '" cascade;' from pg_tables  where schemaname = 'public'
+

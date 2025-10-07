@@ -1,0 +1,82 @@
+[postgres@node1 expected]$
+[postgres@node1 expected]$ /usr/local/pgsql12/bin/psql
+psql (12.0)
+Type "help" for help.
+
+postgres=# CREATE USER user1 PASSWORD 'user1' superuser; 
+CREATE ROLE
+postgres=# CREATE USER user2 PASSWORD 'user2';
+CREATE ROLE
+
+GRANT user2 TO user1;
+
+postgres=# CREATE DATABASE db2 OWNER user2;
+CREATE DATABASE
+
+postgres=# CREATE EXTENSION dblink;
+CREATE EXTENSION
+postgres=#
+
+
+CREATE SERVER db2remote FOREIGN DATA WRAPPER dblink_fdw OPTIONS (host '192.168.38.133',dbname 'db2', port '5432'); (db2 : target database)
+
+CREATE USER MAPPING FOR user1 SERVER db2remote OPTIONS (user 'user2', password 'user2');
+
+postgres=# GRANT USAGE ON FOREIGN SERVER db2remote TO user1;
+GRANT
+
+[postgres@node1 expected]$ /usr/local/pgsql12/bin/psql -U user2 -d db2
+psql (12.0)
+Type "help" for help.
+
+db2=> CREATE TABLE foo (id int);
+CREATE TABLE
+db2=> INSERT INTO foo (id) VALUES (100), (200), (300);
+INSERT 0 3
+db2=>
+
+[postgres@node1 expected]$ /usr/local/pgsql12/bin/psql -U user1   (to access db2 database table from db1 datatabase)
+psql (12.0)
+Type "help" for help.
+
+postgres=# SELECT dblink_connect('myconn', 'db2remote');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+postgres=# SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int); (select/insert/delete/update)
+  a
+-----
+ 100
+ 200
+ 300
+(3 rows)
+
+postgres=#
+
+metadata tables infromation:
+----------------------------
+postgres=# select * from pg_user_mappings;
+ umid  | srvid |  srvname  | umuser | usename |          umoptions
+-------+-------+-----------+--------+---------+-----------------------------
+ 16482 | 16481 | db2remote |  16432 | user1   | {user=user2,password=user2}
+
+postgres=# select * from pg_foreign_data_wrapper;
+  oid  |  fdwname   | fdwowner | fdwhandler | fdwvalidator | fdwacl | fdwoptions
+-------+------------+----------+------------+--------------+--------+------------
+ 16480 | dblink_fdw |       10 |          0 |        16479 |        |
+(1 row)
+
+postgres=# select * from pg_foreign_server;
+  oid  |  srvname  | srvowner | srvfdw | srvtype | srvversion |                 srvacl                 |                 srvoptions
+-------+-----------+----------+--------+---------+------------+----------------------------------------+--------------------------------------------
+ 16481 | db2remote |       10 |  16480 |         |            | {postgres=U/postgres,user1=U/postgres} | {host=192.168.38.132,dbname=db2,port=5432}
+
+postgres=# select * from information_schema._pg_foreign_data_wrappers;
+  oid  | fdwowner | fdwoptions | foreign_data_wrapper_catalog | foreign_data_wrapper_name | authorization_identifier | foreign_data_wrapper_language
+-------+----------+------------+------------------------------+---------------------------+--------------------------
+
+
+ 16480 |       10 |            | postgres                     | dblink_fdw                | postgres                 | c
+

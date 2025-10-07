@@ -1,0 +1,162 @@
+Master (DC)
+
+###############################################
+
+#cd /etc/init.d/
+
+#service ppas-9.2 stop
+
+		Stopping Postgres Plus Advanced Server 9.2: 
+		waiting for server to shut down.... done
+		server stopped
+
+
+Slave (DR)
+
+###############################################
+
+
+#cd /etc/init.d/
+
+#service ppas-9.2 stop
+
+		Stopping Postgres Plus Advanced Server 9.2: 
+		waiting for server to shut down.... done
+		server stopped
+
+$$$$$$$$$$$$$$$$$$$$$ make slave to master $$$$$$$$$$$$$$$$$
+
+#rm recovery.conf
+
+# vim postgresql.conf
+
+	--->> hot_standby = off (previously it is in 'on' now make it to 'off') 
+
+# vim pg_hba.conf 
+
+	--->> Add slave ip and make previous master ip as replication 
+
+
+
+Now Move to Master (DC) make master as slave
+
+###############################################
+
+#rm -f postmaster.pid
+
+#cp share/recovery.conf.sample data/recovery.conf
+
+
+Edit this recovery.conf file and update standby server settings:
+
+#vim recovery.conf
+
+   --->>  standby_mode = on
+
+
+   --->> primary_conninfo = 'host= {opensourcedbms_pg_master }port=5432 user=postgres password=postgres'   ------Give the primary database IP address	
+
+
+
+
+chown postgres:postgres data/recovery.conf
+
+
+# vim postgresql.conf
+
+	--->> hot_standby = on (previously it is in 'off' now make it to 'on') 
+
+
+# vim pg_hba.conf 
+
+	--->> Add slave ip and make previous master ip as replication 
+
+
+###############################################################################################################
+
+
+now start the present slave  so that it has to show recovering or waiting
+
+
+it will show like this
+
+
+
+#service ppas-9.2 status
+
+	pg_ctl: no server running
+
+# service ppas-9.2 start
+
+	Starting Postgres Plus Advanced Server 9.2: 
+	waiting for server to start.... done
+	server started
+	Postgres Plus Advanced Server 9.2 started successfully
+
+# ps -ef|grep postgres
+
+
+postgres 18665     1  0 15:14 ?        00:00:00 /opt/PostgresPlus/9.2AS/bin/edb-postgres -D /opt/PostgresPlus/9.2AS/data
+postgres 18666 18665  0 15:14 ?        00:00:00 postgres: logger process                                                
+postgres 18667 18665  0 15:14 ?        00:00:00 postgres: startup process   waiting for 000000010000000000000005        
+postgres 18668 18665  0 15:14 ?        00:00:00 postgres: checkpointer process                                          
+postgres 18669 18665  0 15:14 ?        00:00:00 postgres: writer process                                                
+postgres 18670 18665  0 15:14 ?        00:00:00 postgres: stats collector process                                       
+root     18681 17899  0 15:14 pts/1    00:00:00 grep postgres
+
+
+##################################################################################################################
+
+
+move to other server (present master) 
+
+
+# service ppas-9.2 status
+
+		pg_ctl: no server running
+
+# service ppas-9.2 start
+
+		Starting Postgres Plus Advanced Server 9.2: 
+		waiting for server to start.... done
+		server started
+		Postgres Plus Advanced Server 9.2 started successfully
+
+# ps -ef|grep postgres
+
+postgres   500     1  2 15:16 ?        00:00:00 /opt/PostgresPlus/9.2AS/bin/edb-postgres -D /opt/PostgresPlus/9.2AS/data
+postgres   501   500  0 15:16 ?        00:00:00 postgres: logger process                                                
+postgres   503   500  0 15:16 ?        00:00:00 postgres: checkpointer process                                          
+postgres   504   500  0 15:16 ?        00:00:00 postgres: writer process                                                
+postgres   505   500  0 15:16 ?        00:00:00 postgres: wal writer process                                            
+postgres   506   500  0 15:16 ?        00:00:00 postgres: autovacuum launcher process                                   
+postgres   507   500  0 15:16 ?        00:00:00 postgres: stats collector process                                       
+postgres   513   500  0 15:17 ?        00:00:00 postgres: wal sender process postgres 10.200.2.88[60053] streaming 0/5099F78
+root       515   364  0 15:17 pts/0    00:00:00 grep postgres
+
+##########################################################################################################################
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   COMPLETED ( dc to dr, dr to dc )  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+check the present slave server it will show recovering state 
+
+
+																			
+
+
+
+																	DOCUMENT by --Chandra Kiran--
+
+
+
+
+
+
+
+
+
+
+
+       

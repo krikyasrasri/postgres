@@ -1,0 +1,481 @@
+AUTOFAILOVER CONCEPT IN EDB POSTGRESQL:
+--------------------------------------------------------
+master      : 192.168.38.133
+sync slave  : 192.168.38.134
+async slave : 192.168.38.135
+
+cd /var/lib/edb-as11
+
+edb-as10-server-10.10.18-1-linux-x64.run
+edb-efm32-3.2.0-1.rhel7.x86_64.rpm
+
+EDB PostgreSQL Installation:
+
+[root@localhost pgsql]# chmod +x edb-as10-server-10.12.20-1-linux-x64.run
+[root@localhost pgsql]# ls -ltr
+total 116228
+-rwxr-xr-x. 1 root root 119016407 Mar  4 05:11 edb-as10-server-10.12.20-1-linux-x64.run
+
+installation :  [root@localhost as10]# ./edb-as10-server-10.12.20-1-linux-x64.run
+
+[root@localhost edb]# ./edb-as10-server-10.10.18-1-linux-x64.run --prefix (non default location)
+
+
+installation :  [root@localhost as10]# ./edb-as10-server-10.12.20-1-linux-x64.run
+
+build master parameters:
+
+listen_address='*'
+wal_level=replica
+wal_log_hints=on
+wal_keep_segments=1024 (wal_keep_size=1024)
+
+check status:
+
+[root@localhost bin]# systemctl status edb-as-10
+[root@localhost bin]# systemctl start edb-as-10
+
+uninstallation: 
+
+[root@localhost as10]# ./uninstall-edb-as10-server
+
+install EDB s/w in all the three nodes.
+
+
+build replication as shown below.
+
+upto 11.4 version recovery.conf file is there to keep primary connection details.
+but from 12 onwards primary connection details we are keeping in postgresql.auto.conf file.
+
+192.168.38.133  --> master server
+192.168.38.134   --> sync slave
+192.168.38.135   --> async slave
+
+build replication between 3 nodes:
+---------------------------------
+upto 11.4 , instead of standby.file there is a file called recovery.conf file.
+go to slave server and run below command form both the slave nodes:
+
+-bash-4.2$ /opt/edb/as10/bin/pg_basebackup -D /opt/edb/as10/data/ -X fetch -h 192.168.38.132 -R -P
+
+and add bewlo entry in recovery.conf file, this is just to make sure slave got promoted.
+
+trigger_file = '/tmp/pg_failover_trigger'
+
+upto postgresql 11.4 recovery.conf file is there, after that we are making that entries in postgresql.auto.conf file and create standby.signal.
+
+sample recovery.conf file:
+
+-bash-4.2$ cat recovery.conf
+# EDB Failover Manager
+# This generated recovery.conf file prevents the db server from accidentally
+standby_mode = 'on'
+primary_conninfo = 'user=enterprisedb host=192.168.38.133 port=5444'
+trigger_file = '/tmp/pg_failover_trigger'
+recovery_target_timeline='latest'
+
+
+
+implement auto failover setup:
+-----------------------------
+we have s/w called EFM.
+
+install below s/w in across all the 3 nodes.
+
+[root@node2 edb-as11]# rpm -ivh edb-efm32-3.2.0-1.rhel7.x86_64.rpm
+
+
+VIP is required to avoid un necessary confusion to end users and delay in falover mechanisim.
+
+------------------------------------------
+to perfrom auto failover server should be part of replication, then only all the servers will be in sync. so if master went down, anyway slave is in sync, so we can make sync slave as master
+
+to perfrom auto failover in EDB , we have a s/w called Enterprise failover manager(EFM). for this 3 postgresql servers mandatory.
+
+that means 3 servers should be part of replication.
+
+1 master
+
+1 sync slave
+
+1 async slave
+
+always sync slave will be priority 1, if master went down sync slave will became master automatically.
+
+once installation done:
+----------------------
+rpm -ivh jre-8u231-linux-x64.rpm(all 3 nodes)
+rpm -ivh edb-efm32-3.2.0-1.rhel7.x86_64.rpm (in all 3 nodes)
+
+
+we should copy conf files across 3 nodes as shown below.
+----------------------------------------------------------
+
+cd /etc/edb/efm-3.2
+[root@node2 efm-3.2]# ls -ltr
+total 48
+-rw-r--r--. 1 efm efm   179 Nov 17  2019 efm.nodes.in
+-rw-r--r--  1 efm efm 17812 Apr 20  2020 efm.properties.in
+
+
+cp efm.properties.in efm.properties
+cp efm.nodes.in efm.nodes
+
+chown efm:efm efm.properties
+chown efm:efm efm.nodes
+
+
+master:192.168.38.133
+sync:192.168.38.134
+async:192.168.38.135
+
+create virtual IP:
+------------------
+go to efm bin location.
+
+-bash-4.2$ cd /usr/edb/efm-3.2/bin/
+-bash-4.2$ pwd
+/usr/edb/efm-3.2/bin
+-bash-4.2$ ls -ltr
+total 40
+-rwxr-xr-x. 1 efm efm  2500 Jul 22  2018 runJavaApplication.sh
+-rwxr-xr-x. 1 efm efm  1483 Jul 22  2018 runefm.sh
+-rwxr-xr-x. 1 efm efm  5339 Jul 22  2018 efm_root_functions
+-rwxr-xr-x. 1 efm efm 13813 Jul 22  2018 efm_db_functions
+-rwxr-xr-x. 1 efm efm  1380 Jul 22  2018 efm_address
+-rwxr-xr-x. 1 efm efm   388 Jul 22  2018 efm
+drwxr-x---. 2 efm efm    23 Nov  9 06:05 secure
+-bash-4.2$
+
+
+Ading virtual ip:
+
+efm_address add4 interface_name IPv4_addr/prefix
+
+[root@node2 bin]# /usr/edb/efm-3.2/bin/efm_address add4 eno16777736 192.168.38.132/24
+[root@node1 efm-3.2]#
+
+[root@node2 bin]# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eno16777736: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:0c:29:4c:44:83 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.38.133/24 brd 192.168.38.255 scope global dynamic eno16777736
+       valid_lft 1087sec preferred_lft 1087sec
+    inet 192.168.38.132/24 scope global secondary eno16777736
+       valid_lft forever preferred_lft forever
+
+efm_address del eno16777736 192.168.38.132/24
+
+
+login to database:
+
+create database efm_db;
+
+create user efm_user with password 'Welcome123';
+
+alter user efm_user with superuser;
+
+edb=# ALTER DATABASE efm_db OWNER TO efm_user;
+ALTER DATABASE
+edb=# \l+ efm_db
+                                                   List of databases
+  Name  |  Owner   | Encoding |   Collate   |    Ctype    | ICU | Access privileges | Size  | Tablespace | Description
+--------+----------+----------+-------------+-------------+-----+-------------------+-------+------------+-------------
+ efm_db | efm_user | UTF8     | en_US.UTF-8 | en_US.UTF-8 |     |                   | 12 MB | pg_default |
+(1 row)
+
+
+password encryption:
+=====================
+-bash-4.2$ /usr/edb/efm-3.2/bin/efm encrypt efm
+This utility will generate an encrypted password for you to place in your
+EFM cluster property file: /etc/edb/efm-3.2/efm_user.properties
+
+Please enter the password and hit enter:
+
+Please enter the password again to confirm:
+
+The encrypted password is: 60f9fe38954d22e0474153a819cbae10
+
+Please paste this into your efm.properties file
+        db.password.encrypted=60f9fe38954d22e0474153a819cbae10
+
+make configuration changes in conf files:
+=========================================
+
+The /etc/edb/efm-3.2/efm_user.properties file does not exist.
+Make sure you are using the correct cluster name.
+
+db.user=enterprisedb
+db.password.encrypted=
+db.port=5444
+db.database=efm_db
+db.service.owner=enterprisedb
+db.service.name=edb-as-10
+db.bin=/opt/edb/as10/bin
+db.recovery.conf.dir=/opt/edb/as10/data
+user.email
+bind.address=server ip:7800
+adminport=7809
+is.witness=false
+pingServerIp=8.8.8.8 (any pingable server fine)
+auto.allow.hosts=true (as part of cluster master should allow other hosts as well)
+stable.nodes.file=true (efm.nodes file will contain other server ip address)
+
+
+virtualIp=192.168.38.132
+virtualIp.interface=eno16777736
+virtualIp.prefix=24
+virtualIp.single=true
+
+
+once efm.properties file created in master server, copy same file to another 2 servers, and edit bind address with that server ip itself.
+
+-bash-4.2$ cat efm.nodes
+# List of node address:port combinations separated by whitespace.
+# The list should include at least the membership coordinator's address.
+192.168.38.133:7800 192.168.38.135:7800
+
+start efm services one by one from master to slave.
+
+
+
+
+[root@node1 efm-3.2]# /usr/edb/efm-3.2/bin/efm  cluster-status efm
+Cluster Status: efm
+
+        Agent Type  Address              Agent  DB       VIP
+        -----------------------------------------------------------------------
+        Master      192.168.38.132       UP     UP       192.168.38.134*
+        Standby     192.168.38.133       UP     UP       192.168.38.134
+        Standby     192.168.38.135       UP     UP       192.168.38.134
+
+Allowed node host list:
+        192.168.38.132 192.168.38.133 192.168.38.135
+
+Membership coordinator: 192.168.38.132
+
+Standby priority host list:
+        192.168.38.133 192.168.38.135
+
+Promote Status:
+
+        DB Type     Address              XLog Loc         Info
+        --------------------------------------------------------------
+        Master      192.168.38.132       0/1A003AB8
+        Standby     192.168.38.135       0/1A003AB8
+        Standby     192.168.38.133       0/1A003AB8
+
+        Standby database(s) in sync with master. It is safe to promote.
+
+
+failover from master to slave:
+-------------------------------
+1.stop master server in 132.
+
+
+if gracefull shutdown 3.2 will not do failover, from 3.4 onwards grace full also do.
+
+[root@node1 efm-3.2]# /usr/edb/efm-3.2/bin/efm  cluster-status efm
+Cluster Status: efm
+
+        Agent Type  Address              Agent  DB       VIP
+        -----------------------------------------------------------------------
+        Idle        192.168.38.132       UP     UNKNOWN  192.168.38.134
+        Promoting   192.168.38.133       UP     UP       192.168.38.134*
+        Standby     192.168.38.135       UP     UP       192.168.38.134
+
+Allowed node host list:
+        192.168.38.132 192.168.38.133 192.168.38.135
+
+Membership coordinator: 192.168.38.132
+
+Standby priority host list:
+        192.168.38.135
+
+Promote Status:
+
+        DB Type     Address              XLog Loc         Info
+        --------------------------------------------------------------
+        Master      192.168.38.133       0/1A003BC8
+        Unknown     192.168.38.135       UNKNOWN          Connection to 192.168.38.135:5444 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+
+        One or more standby databases are not in sync with the master database.
+
+Idle Node Status (idle nodes ignored in XLog location comparisons):
+
+        Address              XLog Loc         Info
+        --------------------------------------------------------------
+        192.168.38.132       UNKNOWN          Connection to 192.168.38.132:5444 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+[root@node1 efm-3.2]# /usr/edb/efm-3.2/bin/efm  cluster-status efm
+Cluster Status: efm
+
+        Agent Type  Address              Agent  DB       VIP
+        -----------------------------------------------------------------------
+        Idle        192.168.38.132       UP     UNKNOWN  192.168.38.134
+        Master      192.168.38.133       UP     UP       192.168.38.134*
+        Standby     192.168.38.135       UP     UP       192.168.38.134
+
+Allowed node host list:
+        192.168.38.132 192.168.38.133 192.168.38.135
+
+Membership coordinator: 192.168.38.132
+
+Standby priority host list:
+        192.168.38.135
+
+Promote Status:
+
+        DB Type     Address              XLog Loc         Info
+        --------------------------------------------------------------
+        Master      192.168.38.133       0/1A003BC8
+        Standby     192.168.38.135       0/1A003AB8
+
+        One or more standby databases are not in sync with the master database.
+
+Idle Node Status (idle nodes ignored in XLog location comparisons):
+
+        Address              XLog Loc         Info
+        --------------------------------------------------------------
+        192.168.38.132       UNKNOWN          Connection to 192.168.38.132:5444 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+[root@node1 efm-3.2]#
+
+
+later you can add your old master as slave or if you want to still add it as master ru pg_rewind.
+
+always check efm.nodes file, if failover happened.
+
+
+---------------------------------------
+install edb,efm,jre in all three nodes.
+build normall replication using basebackup with sync mode.
+configure efm.proferties file and efm.nodes file in all three nodes.
+add vip in master server.
+start efm in master,sync,aysnc.
+
+we can find VIP release time from failed node log.
+
+5/29/20 7:47:34 PM
+5/29/20 7:47:47 PM
+
+
+standby_mode = 'on'
+primary_conninfo = 'user=enterprisedb passfile=''/opt/edb/as10/.pgpass'' host=192.168.38.135 port=5444 sslmode=prefer sslcompression=1 krbsrvname=postgres target_session_attrs=any'
+trigger_file = '/tmp/pg_failover_trigger'
+recovery_target_timeline='latest'
+
+
+
+
+failover:
+---------
+if master server went down node which is on priotiry 1, will become the master.
+
+[root@node1 data]# /usr/edb/efm-3.2/bin/efm set-priority efm 192.168.38.132 1
+set-priority signal sent to local agent.
+
+
+
+[root@node1 data]#
+You have new mail in /var/spool/mail/root
+[root@node1 data]# /usr/edb/efm-3.2/bin/efm cluster-status efm
+Cluster Status: efm
+
+        Agent Type  Address              Agent  DB       VIP
+        -----------------------------------------------------------------------
+        Standby     192.168.38.132       UP     UP       192.168.38.134
+        Master      192.168.38.133       UP     UP       192.168.38.134*
+        Standby     192.168.38.135       UP     UP       192.168.38.134
+
+Allowed node host list:
+        192.168.38.132 192.168.38.133 192.168.38.135
+
+Membership coordinator: 192.168.38.132
+
+Standby priority host list:
+        192.168.38.132 192.168.38.135
+
+Promote Status:
+
+        DB Type     Address              XLog Loc         Info
+        --------------------------------------------------------------
+        Master      192.168.38.133       0/440001A8
+        Standby     192.168.38.135       0/440001A8
+        Standby     192.168.38.132       0/440001A8
+
+        Standby database(s) in sync with master. It is safe to promote.
+
+once master went down, sync slave will promotes as master, if you want add failed master as slave, you have to create recovery.conf file.
+and start services.
+
+
+
+[root@node2 efm-3.2]# /usr/edb/efm-3.2/bin/efm resume efm
+Resume command successful on local agent.
+
+[root@localhost data]# cat recovery.done
+standby_mode = 'on'
+primary_conninfo = 'user=enterprisedb host=192.168.38.133 port=5444'
+trigger_file = '/tmp/pg_failover_trigger'
+recovery_target_timeline='latest'
+
+
+
+[root@localhost efm-3.2]# /usr/edb/efm-3.2/bin/efm promote efm -switchover -sourcenode 192.168.38.134
+
+
+
+
+2nd quadrant : 
+
+domain with 2 ip's
+
+
+
+take 3 ip address
+
+install edb s/w on all 3 nodes
+
+make 1 server as master
+
+remaining 2 nodes are salves, to make those as slaves, run basebackup.
+
+replication setup ready.
+
+EFM s/w, install in all 3 nodes.
+
+default it will create 2 folders.
+
+/usr/edb/efm-3.2/bin (utilites)
+/etc/edb/efm-3.2/( configuration files, efm.properties,efm.nodes)
+
+start efm services in order master,sync,aycn slave.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

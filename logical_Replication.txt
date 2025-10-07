@@ -1,0 +1,293 @@
+Use Cases - When is Logical Replication Useful?
+
+If you want to consolidate multiple databases tables into a single database for analytical purposes.
+If your requirement is to replicate data between different major versions of PostgreSQL.
+If you want to send incremental changes in a single database or a subset of a database to other databases.
+If giving access to replicated data to different groups of users.
+If sharing a subset of the database between multiple databases.
+there is no concept of master and slave.
+
+server a: table a
+server b: table a (as part of DR)
+
+Limitations Of Logical Replication
+---------------------------------
+this will be usefull if you want to replicate only set of tables data to different server/different database.
+in that case only logical replication will work, what ever your requirement is if you want perform replication b/w two different version s
+ervers this is the only option.
+
+Logical Replication has some limitations:
+
+
+Tables must have the same fully qualified name between publication(master) and subscription(slave).
+Tables must have primary key or unique key
+Mutual (bi-directional) Replication is not supported
+Does not replicate schema/DDL changes.(DRCA--drop rename create alter)
+only DML operations will be reflect (UPDATE,INSERT,DELETE,TRUNCATE)
+Does not replicate sequences 
+Does not replicate Large Objects(lob.blob,clob)
+
+only table data only (either insert/update/delete operations will be replicate, remaining nothing will work)
+
+Subscriptions can have more columns or different order of columns, but the types and column names must match between Publication and Subscription.
+
+Superuser privileges to add all tables.
+
+You cannot stream over to the same host (subscription will get locked).
+
+server should be different or instance should be different.
+
+
+Implementation:
+---------------
+you need two postgresql servers either same version or not,same database or not. it will works.
+
+------------------------------------------------------------------
+publication server(master):
+--------------------------
+in postgresql.conf file you need to keep below parameter:
+
+wal_level= logical
+
+after making changes to reflect we need to restart services.
+
+
+[postgres@localhost ram]$ psql -p5435
+psql (11.0)
+Type "help" for help.
+
+postgres=# \l
+                                  List of databases
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges
+-----------+----------+----------+-------------+-------------+-----------------------
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+ ram       | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+           |          |          |             |             | postgres=CTc/postgres
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+           |          |          |             |             | postgres=CTc/postgres
+(4 rows)
+
+postgres=# create database source_rep;
+CREATE DATABASE
+postgres=# \c source_rep
+You are now connected to database "source_rep" as user "postgres".
+source_rep=# create table test_rep(id int primary key, name varchar);
+CREATE TABLE
+source_rep=# create table test_rep_other(id int primary key, name varchar);
+CREATE TABLE
+source_rep=# \dt
+             List of relations
+ Schema |      Name      | Type  |  Owner
+--------+----------------+-------+----------
+ public | test_rep       | table | postgres
+ public | test_rep_other | table | postgres
+(2 rows)
+
+source_rep=# insert into test_rep values(generate_series(1,100),'data'||generate_series(1,100));
+INSERT 0 100
+source_rep=# insert into test_rep_other  values(generate_series(1,100),'data'||generate_series(1,100));
+INSERT 0 100
+source_rep=# select count(1) from test_rep;
+ count
+-------
+   100
+(1 row)
+
+source_rep=# select count(1) from test_rep_other;
+ count
+-------
+   100
+(1 row)
+
+source_rep=# CREATE PUBLICATION mypub FOR TABLE test_rep,test_rep_other;
+CREATE PUBLICATION
+source_rep=# \q
+
+source_rep=# select * from pg_publication;
+  oid  | pubname | pubowner | puballtables | pubinsert | pubupdate | pubdelete | pubtruncate
+-------+---------+----------+--------------+-----------+-----------+-----------+-------------
+ 24597 | mypub   |       10 | f            | t         | t         | t         | t
+
+source_rep=# select * from pg_publication_rel;
+  oid  | prpubid | prrelid
+-------+---------+---------
+ 24598 |   24597 |   24581
+ 24599 |   24597 |   24589
+(2 rows)
+
+
+tables part of publication:
+
+source_rep=# select relname from pg_class where oid in(select prrelid from pg_publication_rel);
+    relname
+----------------
+ test_rep
+ test_rep_other
+(2 rows)
+
+
+---------------------------------------------
+subscription(slave server):
+----------------------------------------------
+change below parameter in slave postgresql.conf file and restart services.
+
+wal_level= logical
+
+[postgres@localhost rams]$ psql -p5433
+psql (11.0)
+Type "help" for help.
+
+postgres=# \l
+                                  List of databases
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges
+-----------+----------+----------+-------------+-------------+-----------------------
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+           |          |          |             |             | postgres=CTc/postgres
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+           |          |          |             |             | postgres=CTc/postgres
+(3 rows)
+
+postgres=# create database target_rep;
+CREATE DATABASE
+postgres=# \c target_rep
+You are now connected to database "target_rep" as user "postgres".
+target_rep=# create table test_rep_other(id int primary key, name varchar);
+CREATE TABLE
+target_rep=# create table test_rep(id int primary key, name varchar);
+CREATE TABLE
+
+target_rep=# CREATE SUBSCRIPTION mysub CONNECTION 'dbname=source_rep host=192.168.38.133 user=postgres port=5432' PUBLICATION mypub;
+NOTICE:  created replication slot "mysub" on publisher
+CREATE SUBSCRIPTION
+target_rep=#
+
+your log file should contain below steps.
+
+    4041 2020-03-27 19:19:16 PDT LOG:  logical replication apply worker for subscription "mysub" has started
+    4043 2020-03-27 19:19:17 PDT LOG:  logical replication table synchronization worker for subscription "mysub", table "test_rep_other" has started
+    4042 2020-03-27 19:19:17 PDT LOG:  logical replication table synchronization worker for subscription "mysub", table "test_rep" has started
+    4043 2020-03-27 19:19:17 PDT LOG:  logical replication table synchronization worker for subscription "mysub", table "test_rep_other" has finished
+    4042 2020-03-27 19:19:17 PDT LOG:  logical replication table synchronization worker for subscription "mysub", table "test_rep" has finished
+
+
+replication done, for validation check the record count in tables.
+select * from pg_stat_replication; if replication not working there will be no entries, if no entry means again you have to create scubscrtion.
+
+to monitor replication:
+
+pg_publication_tables
+pg_stat_subscription
+
+you can give all the tables under one schema, that means yor are not doing schema replication.
+
+pg_publication:
+--------------
+postgres=# \c source_rep;
+You are now connected to database "source_rep" as user "postgres".
+source_rep=# select * from pg_publication;
+ pubname | pubowner | puballtables | pubinsert | pubupdate | pubdelete | pubtruncate
+---------+----------+--------------+-----------+-----------+-----------+-------------
+ mypub   |       10 | f            | t         | t         | t         | t
+(1 row)
+
+source_rep=#
+
+if you want to replciation all tables of database , below is the approach.
+
+source_rep=# CREATE PUBLICATION alltables FOR ALL TABLES;
+CREATE PUBLICATION
+
+take dump from publication like below.
+
+pg_dump -d source_Rep -t s1.tablename -p5434 -s>publicationtables.sql
+
+
+goto subsctiption server:
+------------------------
+psql -p5432 -d target_Rep -f publicationtables.sql
+
+create subscription as mentioned above.
+
+if any errors means you have to create scubscription again.
+
+
+
+master server:
+-------------
+source_rep=# select * from pg_stat_replication;
+-[ RECORD 1 ]----+------------------------------
+pid              | 3162
+usesysid         | 10
+usename          | postgres
+application_name | mysub
+client_addr      | ::1
+client_hostname  |
+client_port      | 52930
+backend_start    | 2018-12-28 23:38:49.357683-08
+backend_xmin     |
+state            | streaming
+sent_lsn         | 0/92867A8
+write_lsn        | 0/92867A8
+flush_lsn        | 0/92867A8
+replay_lsn       | 0/92867A8
+write_lag        |
+flush_lag        |
+replay_lag       |
+sync_priority    | 0
+sync_state       | async
+
+source_rep=#
+
+source_rep=# select * from pg_publication_tables;
+ pubname | schemaname |   tablename
+---------+------------+----------------
+ mypub   | public     | test_rep
+ mypub   | public     | test_rep_other
+(2 rows)
+
+source_rep=#
+
+
+target_rep=# \x
+Expanded display is on.
+target_rep=# select * from pg_stat_subscription;
+-[ RECORD 1 ]---------+------------------------------
+subid                 | 16401
+subname               | mysub
+pid                   | 3161
+relid                 |
+received_lsn          | 0/92867A8
+last_msg_send_time    | 2018-12-28 23:46:01.286717-08
+last_msg_receipt_time | 2018-12-28 23:46:01.289782-08
+latest_end_lsn        | 0/92867A8
+latest_end_time       | 2018-12-28 23:46:01.286717-08
+
+target_rep=#
+
+
+if some one perfromed any DDL changes on top of publication node, replication will break, then there will be no output for 
+select * from pg_stat_replication;
+
+postgres=# select * from pg_stat_subscription; (subscription)
+
+
+again we have to fix the issue and refresh subscription.
+
+target_rep=# ALTER SUBSCRIPTION mysub REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+
+if above command not resolves the issue after fix you have drop and recreate the subscription.
+
+the only tracking method is pg log for logical replication.
+
+
+ALTER SUBSCRIPTION mysub  REFRESH PUBLICATION WITH ( COPY_DATA );
+
+
+
+
+
+
+
