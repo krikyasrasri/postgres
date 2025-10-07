@@ -1,0 +1,154 @@
+pgbadger - alert log analyzer
+
+log_checkpoints = on
+log_connections = on
+log_disconnections = on
+log_lock_waits = on
+log_temp_files = 0
+log_autovacuum_min_duration = 0
+log_min_duration_statement = 1s
+
+Locked
+--------
+update emp set sal=1000 where id=1;
+
+
+postgres=#
+postgres=# explain analyze select * from pgbench_tellers;
+                                                  QUERY PLAN
+---------------------------------------------------------------------------------------------------------------
+ Seq Scan on pgbench_tellers  (cost=0.00..8.00 rows=500 width=352) (actual time=0.016..0.077 rows=500 loops=1)
+ Planning Time: 0.051 ms
+ Execution Time: 0.155 ms
+(3 rows)
+
+
+postgres=# explain analyze select * from pgbench_accounts order by bid; 		#tempfilesquery
+                                                                     QUERY PLAN
+
+------------------------------------------------------------------------------------------------------------------------------------
+ Gather Merge  (cost=550322.97..1036467.94 rows=4166666 width=97) (actual time=2999.142..5452.003 rows=5000000 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   ->  Sort  (cost=549322.94..554531.28 rows=2083333 width=97) (actual time=2891.711..3205.986 rows=1666667 loops=3)
+         Sort Key: bid
+         Sort Method: external merge  Disk: 158464kB
+         Worker 0:  Sort Method: external merge  Disk: 178696kB
+         Worker 1:  Sort Method: external merge  Disk: 186560kB
+         ->  Parallel Seq Scan on pgbench_accounts  (cost=0.00..102801.33 rows=2083333 width=97) (actual time=0.045..1045.739 rows=1
+666667 loops=3)
+ Planning Time: 0.330 ms
+ Execution Time: 5705.333 ms
+(11 rows)
+
+Time: 5707.089 ms (00:05.707)
+postgres=#
+
+postgres=#  explain analyze select * from test where aid='1452';
+                                                      QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------
+ Gather  (cost=1000.00..109009.33 rows=1 width=97) (actual time=2.965..582.551 rows=1 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   ->  Parallel Seq Scan on test  (cost=0.00..108009.23 rows=1 width=97) (actual time=374.220..566.452 rows=0 loops=3)
+         Filter: (aid = 1452)
+         Rows Removed by Filter: 1666666
+ Planning Time: 0.503 ms
+ Execution Time: 582.610 ms
+(8 rows)
+
+Time: 584.572 ms
+postgres=#
+
+
+postgres=# update test_v set filler = 1000;
+
+UPDATE 5000000
+Time: 70567.252 ms (01:10.567)
+postgres=#
+postgres=#
+postgres=#
+postgres=# vacuum test_v;					#vacuumhappened
+VACUUM
+Time: 9213.368 ms (00:09.213)
+postgres=#
+
+demo=# explain analyze with city_records as (select aa.city from airports aa group by aa.city having count(1) > 1)
+demo-# select a.airport_code as code, a.airport_name, a.city, a.coordinates from airports a, city_records cr
+demo-# where a.city = cr.city;
+                                                             QUERY PLAN
+------------------------------------------------------------------------------------------------------------------------------------
+ Hash Join  (cost=41.43..64.35 rows=34 width=84) (actual time=0.362..0.533 rows=5 loops=1)
+   Hash Cond: ((ml.city ->> lang()) = ((ml_1.city ->> lang())))
+   ->  Seq Scan on airports_data ml  (cost=0.00..4.04 rows=104 width=130) (actual time=0.012..0.024 rows=104 loops=1)
+   ->  Hash  (cost=41.01..41.01 rows=34 width=32) (actual time=0.301..0.302 rows=2 loops=1)
+         Buckets: 1024  Batches: 1  Memory Usage: 9kB
+         ->  HashAggregate  (cost=30.82..40.67 rows=34 width=32) (actual time=0.291..0.296 rows=2 loops=1)
+               Group Key: (ml_1.city ->> lang())
+               Filter: (count(1) > 1)
+               Batches: 1  Memory Usage: 32kB
+               Rows Removed by Filter: 99
+               ->  Seq Scan on airports_data ml_1  (cost=0.00..30.30 rows=104 width=32) (actual time=0.032..0.235 rows=104 loops=1)
+ Planning Time: 0.260 ms
+ Execution Time: 0.675 ms
+(13 rows)
+
+Time: 2.088 
+
+
+select  b.ticket_no, b.seat_no, t.passenger_name, t. contact_data from boarding_passes b, tickets t where b.ticket_no = t.ticket_no limit 5;
+
+
+
+with city_records as (select aa.city from airports aa group by aa.city having count(1) > 1)
+select a.airport_code as code, a.airport_name, a.city, a.coordinates from airports a, city_records cr
+where a.city = cr.city;
+
+
+
+
+
+
+
+
+explain analyze with city_records as (
+  select 
+    aa.city 
+  from 
+    airports aa 
+  group by 
+    aa.city 
+  having 
+    count(1) > 1
+) 
+select 
+  a.airport_code as code, 
+  a.airport_name, 
+  a.city, 
+  a.coordinates 
+from 
+  airports a, 
+  city_records cr 
+where 
+  a.city = cr.city;
+  
+  
+  
+select 
+  a.airport_code as code, 
+  a.airport_name, 
+  a.city, 
+  a.coordinates 
+from 
+  airports a 
+where 
+  a.city in (
+    select 
+      aa.city 
+    from 
+      airports aa 
+    group by 
+      aa.city 
+    having 
+      count(1) > 1
+  );

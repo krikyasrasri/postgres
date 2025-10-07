@@ -1,0 +1,152 @@
+Physical backups
+
+Enable archivelog
+------------------		
+
+mkdir -p /u01/archivelogs
+
+in postgresql.conf
+
+archive_mode = on
+archive_command = 'cp %p /u01/archivelogs/%f'
+
+Hot backup
+-----------
+
+1. put your cluster in begin backup mode
+postgres=# select pg_start_backup('stupid');
+ pg_start_backup
+-----------------
+ 0/5000028
+(1 row)
+
+[postgres@node01 pgsql]$ cat 11/backup_label
+START WAL LOCATION: 0/5000028 (file 000000010000000000000005)
+CHECKPOINT LOCATION: 0/5000060
+BACKUP METHOD: pg_start_backup
+BACKUP FROM: master
+START TIME: 2022-06-13 11:04:33 IST
+LABEL: stupid
+START TIMELINE: 1
+
+
+2. Take backup of your files
+tar -cf 11.tar 	11
+
+3. End backup
+
+postgres=# select pg_stop_backup();
+NOTICE:  pg_stop_backup complete, all required WAL segments have been archived
+ pg_stop_backup
+----------------
+ 0/5000130
+(1 row)
+
+
+Restore
+-------
+
+tar -xf 11.tar 
+and start
+
+using pg_basebackup to take backup
+----------------------------------
+
+[postgres@node01 ~]$ pg_basebackup  -D /u01/backup
+[postgres@node01 ~]$
+
+Restore is nothing but extract backup piece and start
+
+
+
+
+current_wal_file -> 00000001000000000000009C
+
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 00000001000000000000009C
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 00000001000000000000009D
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 00000001000000000000009E
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 00000001000000000000009F
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 0000000100000000000000A0
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 0000000100000000000000A1
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 0000000100000000000000A2
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 0000000100000000000000A3
+-rw-------. 1 postgres postgres      340 Jun 13 11:40 00000001000000000000009D.000000D0.backup
+-rw-------. 1 postgres postgres 16777216 Jun 13 11:40 0000000100000000000000A4
+
+
+
+[postgres@node01 pg_wal]$ ls -lrt
+total 262156
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 00000001000000000000009D
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 00000001000000000000009E
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 00000001000000000000009F
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 0000000100000000000000A0
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 0000000100000000000000A1
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 0000000100000000000000A2
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 0000000100000000000000A4
+-rw-------. 1 postgres postgres  16777216 Jun 13 11:40 0000000100000000000000A3
+-rw-------. 1 postgres postgres 134226432 Jun 13 11:40 pg_wal.tar
+drwx------. 2 postgres postgres       265 Jun 13 12:05 archive_status
+[postgres@node01 pg_wal]$ pwd
+/u01/backup/pg_wal
+[postgres@node01 pg_wal]$
+
+
+[postgres@node01 backup]$ cat backup_label
+START WAL LOCATION: 0/9D0000D0 (file 00000001000000000000009D)
+CHECKPOINT LOCATION: 0/9D000108
+BACKUP METHOD: streamed
+BACKUP FROM: master
+START TIME: 2022-06-13 11:40:42 IST
+LABEL: pg_basebackup base backup
+START TIMELINE: 1
+[postgres@node01 backup]$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

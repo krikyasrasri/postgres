@@ -1,0 +1,205 @@
+test07 - 192.168.47.136
+test08 - 192.168.47.137
+test09 - 192.168.47.138
+
+passwordless connectivity
+-------------------------
+ 
+ssh-keygen -t rsa
+ssh postgres@192.168.47.136 mkdir -p .ssh
+cat .ssh/id_rsa.pub | ssh postgres@192.168.47.136 'cat >> .ssh/authorized_keys'
+ssh postgres@192.168.47.136 "chmod 700 .ssh; chmod 640 .ssh/authorized_keys"
+ssh postgres@192.168.47.136
+ 
+Install PostgreSQL Binaries in both the machines
+------------------------------------------------ 
+ 
+yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+yum install -y postgresql13-server
+ 
+useradd postgres                    #creating user `postgres` for postgresql activities 
+passwd postgres                     #give him password 
+mkdir -p /u01/pgsql/14              #decide data directory 
+chown -R postgres:postgres /u01/pgsql/14          #make postgres as owner for the directory 
+su - postgres                                     #switch to postgres user 
+ 
+/usr/local/pgsql/bin/initdb -D /u01/pgsql/14         #initialize data directory 
+/usr/local/pgsql/bin/pg_ctl -D /u01/pgsql/14 start   #start data directory 
+/usr/local/pgsql/bin/psql                           #login to the cluster
+ 
+Extract Activities
+--------------------
+ 
+cd /u01/pgsql/13
+tar -xf base.tar
+mv pg_wal.tar pg_wal
+cd pg_wal
+tar -xf pg_wal.tar
+rm -rf pg_wal.tar
+cd ../
+rm -rf base.tar
+ 
+task 1 - backup and restore the server in remote location.
+-----------------------------------------------------------
+/usr/pgsql-13/bin/pg_basebackup -D /u01/pgsql/13 -Ft --checkpoint=fast -h 192.168.47.209 -v -P
+ 
+task 2 - Restore + apply archivelogs
+----------------------------------------
+cd /u01/pgsql/14
+	
+ 
+in postgresql.conf
+restore_command = 'scp 192.168.47.149:/u01/archivelogs/%f %p'
+ 
+task 3 - Restore + apply archivelogs + point in time recovery (postgresql.conf)
+------------------------------------------------------------------
+cd /u01/pgsql/14 
+touch recovery.signal 
+ 
+in postgresql.conf
+------------------
+restore_command = 'scp 192.168.47.149:/u01/archivelogs/%f %p'
+recovery_target_lsn='0/89FF2BA8'
+ 
+task 4 - Restore + apply archivelogs + wait for next archivelog to generate
+-----------------------------------------------------------------------------
+cd /u01/pgsql/14 
+touch standby.signal 
+ 
+in postgresql.conf
+------------------
+restore_command = 'scp 192.168.47.252:/u01/archivelogs/%f %p'
+trigger_file='/tmp/postgresql.trigger.5432'
+ 
+task 5 - Restore + get changes from wal
+------------------------------------------------
+cd /u01/pgsql/14 
+touch standby.signal 
+ 
+in postgresql.conf 
+------------------
+primary_conninfo = 'user=postgres password=postgres host=192.168.47.252 port=5432 sslmode=disable sslcompression=1'
+trigger_file = '/tmp/postgresql.trigger.5434'
+ 
+task 6 - Synchronous standby
+---------------------------------
+synchronous_standby_names = '*' #postgresql.conf
+ 
+ 
+primary_conninfo = 'user=postgres password=postgres host=192.168.47.149 port=5432 sslmode=disable sslcompression=1'
+restore_command = 'scp 192.168.47.149:/u01/archivelogs/%f %p'
+trigger_file = '/tmp/postgresql.trigger.5432'
+  
+Task 7 - Switchover 
+------------------------
+pg_rewind --target-pgdata=/u01/pgsql/14 --source-server="port=5432   host=192.168.47.149" 
+ 
+pg_rewind --target-pgdata=/u01/pgsql/13 --source-server="port=5432   host=192.168.47.136"  
+ 
+ 
+[postgres@postgres-lab]$ touch /tmp/postgresql.trigger.5432
+[postgres@postgres-lab]$
+ 
+[postgres@postgres-lab]$ pg_rewind --target-pgdata=/u01/pgsql/14 --source-server="port=5432 host=139.59.34.235"
+servers diverged at WAL location 0/3018DE0 on timeline 1
+no rewind required
+[postgres@postgres-lab]$
+Check replication lag
+ 
+
+select
+pid,
+application_name,
+pg_wal_lsn_diff(pg_current_wal_lsn(), sent_lsn) sending_lag,
+pg_wal_lsn_diff(sent_lsn, flush_lsn) receiving_lag,
+pg_wal_lsn_diff(flush_lsn, replay_lsn) replaying_lag,
+pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) total_lag
+from pg_stat_replication;
+
+[or]
+
+SELECT
+pg_is_in_recovery() AS is_slave,
+pg_last_wal_receive_lsn() AS receive,
+pg_last_wal_replay_lsn() AS replay,
+pg_last_wal_receive_lsn() = pg_last_wal_replay_lsn() AS synced,
+(
+EXTRACT(EPOCH FROM now()) – EXTRACT(EPOCH FROM pg_last_xact_replay_timestamp()) )::int AS lag;
+
+
+
+
+
+logical backup
+----------------
+
+create table emp(id int, sal int);
+alter table emp add primary key(id);
+
+1. pg_hba.conf
+
+host    replication     postgres        0.0.0.0/0            trust
+host    replication     logical_user    0.0.0.0/0            trust
+
+2. postgresql.conf
+wal_level=replica
+
+
+3. Create publication and add tables to publication
+
+CREATE PUBLICATION my_publication;
+
+	
+ALTER PUBLICATION my_publication SET (publish = 'insert, update');
+
+[or]
+
+CREATE PUBLICATION pub1 FOR ALL TABLES IN SCHEMA sch1,sch2;
+
+4. create subscriber
+
+CREATE SUBSCRIPTION my_subscription CONNECTION 'host=192.168.47.244 port=5432 password=postgres user=postgres dbname=postgres' PUBLICATION my_publication;
+
+
+# Install the repository RPM:
+yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+# Install PostgreSQL:
+yum install -y postgresql13-server
+
+primary_conninfo = 'user=postgres password=postgres host=192.168.47.197 port=5434 sslmode=disable sslcompression=1'
+trigger_file = '/tmp/postgresql.trigger.5434'
+
+pgpool
+--------
+yum install https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm
+yum install pgpool-II-pg13
+systemctl start pgpool.service
+systemctl status pgpool.service
+ 
+
+listen_addresses = '*'
+
+backend_hostname0 = '192.168.1.134'
+backend_data_directory0 = '/var/lib/edb/as10/data'
+
+backend_hostname1 = '192.168.1.129'
+backend_port1 = 5432
+backend_weight1 = 1
+backend_data_directory1 = '/var/lib/edb/as10/data'
+backend_flag1 = 'ALLOW_TO_FAILOVER'
+
+load_balance_mode = on
+
+sr_check_user = 'postgres'
+sr_check_database = 'postgres'
+
+health_check_user = 'postgres'
+health_check_database = 'postgres'
+
+-> if shows unused
+
+rm -rf /tmp/pgpool_status
+
+/usr/edb/as10/bin/psql -p 9999 -c "show pool_nodes"  postgres
+/usr/edb/as10/bin/psql -p 9999 -c "show pool_nodes"  postgres

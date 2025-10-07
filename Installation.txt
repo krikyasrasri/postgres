@@ -1,0 +1,184 @@
+Cloning a vm
+--------------
+
+1. make a copy of your vm folder
+2. open vmx file in notepad -> Edit DisplayName = <something>
+3. save it
+4. open vmx file in vmware workstation
+5. when asked, choose "I copied it"
+6. to change machine name "hostnamectl set-hostname <something_else>
+7. reboot
+
+Installation
+
+1. source code installation
+
+	1. Download software from internet
+	wget https://ftp.postgresql.org/pub/source/v14.3/postgresql-14.3.tar.gz
+	
+	2. Extract the software
+	tar -xf postgresql-14.3.tar.gz
+	
+	pre-requisites
+	---------------
+	
+	1, make     | make --version          |  >3.80                   |   yum install make      ;because you use make file     
+	2, gcc 	    | rpm -qa | grep gcc      |  gcc-*                   |   yum install gcc       ; compile c programs
+	3, readline | rpm -qa | grep readline | readline, readline-devel |   yum install readline*
+	4, zlib		| rpm -qa | grep zlib     | zlib, zlib-devel         |   yum install zlib*
+	
+	cd /root/postgresql-14.3
+
+    ./configure					#check whether pre-requisites met or not?
+    make						#compile all C programs
+    make install				#run c programs
+   
+    useradd postgres							#add user to do postgres activities
+	passwd postgres								#give password
+    mkdir -p /u01/pgsql/14						#prepare data directory
+    chown -R postgres:postgres /u01/pgsql/14	#make postgres as owner
+    su - postgres								#switch
+    
+	/usr/local/pgsql/bin/initdb -D /u01/pgsql/14			#initialize
+    /usr/local/pgsql/bin/pg_ctl -D /u01/pgsql/14 start		#start
+    /usr/local/pgsql/bin/psql								#login
+    
+
+2. yum
+
+    yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    yum install -y postgresql13-server
+
+	mkdir -p /u01/pgsql/13
+    chown -R postgres:postgres /u01/pgsql/13
+    su - postgres
+	
+	/usr/pgsql-13/bin/initdb -D /u01/pgsql/13
+	/usr/pgsql-13/bin/pg_ctl -D /u01/pgsql/13 start
+    /usr/pgsql-13/bin/psql
+
+3. rpm
+
+	wget https://yum.postgresql.org/12/redhat/rhel-7-x86_64/postgresql12-12.11-1PGDG.rhel7.x86_64.rpm
+	wget https://yum.postgresql.org/12/redhat/rhel-7-x86_64/postgresql12-contrib-12.11-1PGDG.rhel7.x86_64.rpm
+	wget https://yum.postgresql.org/12/redhat/rhel-7-x86_64/postgresql12-libs-12.11-1PGDG.rhel7.x86_64.rpm
+	wget https://yum.postgresql.org/12/redhat/rhel-7-x86_64/postgresql12-server-12.11-1PGDG.rhel7.x86_64.rpm
+	
+	1. postgresql12-libs-12.11-1PGDG.rhel7.x86_64.rpm		#pre-requisites
+    3. postgresql12-server-12.11-1PGDG.rhel7.x86_64.rpm		#server modules
+    4. postgresql12-contrib-12.11-1PGDG.rhel7.x86_64.rpm	#contrib modules/extensions	
+    2. postgresql12-12.11-1PGDG.rhel7.x86_64.rpm			#client modules
+    
+	Installation
+	-------------
+	
+	rpm -ivh postgresql12-libs-12.11-1PGDG.rhel7.x86_64.rpm
+	rpm -ivh postgresql12-12.11-1PGDG.rhel7.x86_64.rpm
+	rpm -ivh postgresql12-server-12.11-1PGDG.rhel7.x86_64.rpm
+
+
+	mkdir -p /u01/pgsql/12
+    chown -R postgres:postgres /u01/pgsql/12
+    su - postgres
+	
+	/usr/pgsql-12/bin/initdb -D /u01/pgsql/12
+	/usr/pgsql-12/bin/pg_ctl -D /u01/pgsql/12 start
+	/usr/pgsql-12/bin/psql
+
+
+Extensions
+----------
+
+Source Code
+------------
+cd /root/postgresql-14.3/contrib
+make
+make install
+
+yum
+---
+yum install postgresql13-contrib
+
+rpm approach
+-------------
+rpm -ivh postgresql12-contrib-12.11-1PGDG.rhel7.x86_64.rpm
+
+
+Multiple clusters?
+-------------------
+
+change port in postgresql.conf file
+port=<newport>
+
+change data directory?
+----------------------
+stop, move it to destination location and start
+
+uninstallation
+---------------
+
+source code
+------------
+cd /root/postgresql-14.3/contrib
+make clean
+
+cd /root/postgresql-14.3
+make clean
+
+yum/rpm
+-------
+yum remove postgresql13*
+
+Root approach
+----------------
+
+yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+yum install -y postgresql13-server
+
+mkdir -p /u01/pgsql/13
+chown -R postgres:postgres /u01/pgsql/13
+su - postgres
+
+/usr/pgsql-13/bin/initdb -D /u01/pgsql/13
+/usr/pgsql-13/bin/pg_ctl -D /u01/pgsql/13 start
+/usr/pgsql-13/bin/psql
+
+[or]
+
+/usr/pgsql-13/bin/postgresql-13-setup initdb
+systemctl enable postgresql-13
+systemctl start postgresql-13
+
+
+
+PATH=/usr/pgsql-14/bin:$PATH:$HOME/.local/bin:$HOME/bin
+
+
+PHOME=/usr/pgsql-14
+PATH=$PHOME/bin:$PATH:$HOME/.local/bin:$HOME/bin
+
+
+Connection establishment
+----------------------------
+
+/usr/pgsql-14/bin/postgres -D /u01/pgsql/14		#postmaster process
+postgres: logger								#background processes
+postgres: checkpointer                          #background processes
+postgres: background writer                     #background processes
+postgres: walwriter                             #background processes
+postgres: autovacuum launcher                   #background processes
+postgres: stats collector                       #background processes
+postgres: logical replication launcher          #background processes
+postgres: postgres postgres [local] idle		#backend process
+
+	1)Connection establishment						-> listener
+	2)Take care of other background processes*		-> PMON
+	3)Instance recovery								-> SMON
+
+
+log_connections = on
+log_disconnections = on
+log_duration = on
+
+
+

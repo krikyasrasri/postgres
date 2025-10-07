@@ -1,0 +1,577 @@
+SELECT
+    pid
+    ,datname
+    ,usename
+    ,application_name
+    ,client_hostname
+    ,client_port
+    ,backend_start
+    ,query_start
+    ,query
+FROM pg_stat_activity
+WHERE state <> 'idle'
+AND pid<>pg_backend_pid();
+
+
+
+
+-- show running queries (9.2)
+SELECT pid, age(clock_timestamp(), query_start), usename, query
+FROM pg_stat_activity
+WHERE query != '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%'
+ORDER BY query_start desc;
+
+
+SELECT pid, age(clock_timestamp(), query_start), usename, query, state
+FROM pg_stat_activity
+WHERE state != 'idle' AND query NOT ILIKE '%pg_stat_activity%'
+ORDER BY query_start desc;
+
+
+-- connection type and count
+SELECT count(*),
+       state
+FROM pg_stat_activity
+GROUP BY 2;
+
+
+
+-- kill running query
+SELECT pg_cancel_backend(procpid);
+
+-- kill idle query
+SELECT pg_terminate_backend(procpid);
+
+-- vacuum command
+VACUUM (VERBOSE, ANALYZE);
+
+
+
+
+-- all database users
+select * from pg_stat_activity where current_query not like '<%';
+
+-- all databases and their sizes
+select * from pg_user;
+
+
+
+
+-- all tables and their size, with/without indexes
+select datname, pg_size_pretty(pg_database_size(datname))
+from pg_database
+order by pg_database_size(datname) desc;
+
+
+
+
+-- table index usage rates (should not be less than 0.99)
+SELECT relname,
+  CASE WHEN (seq_scan + idx_scan) != 0
+    THEN 100.0 * idx_scan / (seq_scan + idx_scan)
+    ELSE 0
+  END AS percent_of_times_index_used,
+  n_live_tup AS rows_in_table
+FROM pg_stat_user_tables
+ORDER BY n_live_tup DESC;
+
+
+
+-- Index % usage:
+SELECT relname, 100 * idx_scan / (seq_scan + idx_scan) percent_of_times_index_used, n_live_tup rows_in_table FROM pg_stat_user_tables WHERE (seq_scan + idx_s
+can) > 0 ORDER BY n_live_tup DESC;
+
+
+
+-- Check the size (as in disk space) of all databases:
+SELECT d.datname AS Name, pg_catalog.pg_get_userbyid(d.datdba) AS Owner,
+  CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')
+    THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))
+    ELSE 'No Access'
+  END AS SIZE
+FROM pg_catalog.pg_database d
+ORDER BY
+  CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')
+    THEN pg_catalog.pg_database_size(d.datname)
+    ELSE NULL
+  END;
+
+
+
+
+
+-- Check the size (as in disk space) of each table:
+SELECT nspname || '.' || relname AS "relation",
+   pg_size_pretty(pg_total_relation_size(C.oid)) AS "total_size"
+ FROM pg_class C
+ LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+ WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+   AND C.relkind <> 'i'
+   AND nspname !~ '^pg_toast'
+ ORDER BY pg_total_relation_size(C.oid) DESC;
+
+
+
+
+
+-- long running sqls
+SELECT pid, now() - query_start as "runtime", usename, datname, wait_event, state, query
+  FROM  pg_stat_activity
+  WHERE now() - query_start > '1 minutes'::interval and state = 'active'
+ ORDER BY runtime DESC;
+
+--- Long running sqls
+SELECT
+  pid,
+  now() - pg_stat_activity.query_start AS duration,
+  query,
+  wait_event,
+  state
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) > interval '2 minutes';
+
+
+
+
+-- see all locks
+SELECT t.relname, l.locktype, page, virtualtransaction, pid, mode, granted
+FROM pg_locks l, pg_stat_all_tables t
+WHERE l.relation = t.relid ORDER BY relation asc;
+
+
+
+---unused indexes
+SELECT
+  schemaname || '.' || relname AS table,
+  indexrelname AS index,
+  pg_size_pretty(pg_relation_size(i.indexrelid)) AS index_size,
+  idx_scan as index_scans
+FROM pg_stat_user_indexes ui
+JOIN pg_index i ON ui.indexrelid = i.indexrelid
+WHERE NOT indisunique
+  AND idx_scan < 50
+  AND pg_relation_size(relid) > 5 * 8192
+ORDER BY pg_relation_size(i.indexrelid) / nullif(idx_scan, 0) DESC NULLS FIRST,
+  pg_relation_size(i.indexrelid) DESC;
+
+
+
+--- How to detect query which holds the lock
+
+select pid,
+       usename,
+       pg_blocking_pids(pid) as blocked_by,
+       query as blocked_query
+from pg_stat_activity
+where cardinality(pg_blocking_pids(pid)) > 0;
+
+
+
+-- MORE Blocking related details.
+SELECT blocked_locks.pid AS blocked_pid,
+blocked_activity.usename AS blocked_user,
+now() - blocked_activity.query_start
+AS blocked_duration,
+blocking_locks.pid AS blocking_pid,
+blocking_activity.usename AS blocking_user,
+now() - blocking_activity.query_start
+AS blocking_duration,
+blocked_activity.query AS blocked_statement,
+blocking_activity.query AS blocking_statement
+FROM pg_catalog.pg_locks AS blocked_locks
+JOIN pg_catalog.pg_stat_activity AS blocked_activity
+ON blocked_activity.pid = blocked_locks.pid
+JOIN pg_catalog.pg_locks AS blocking_locks
+ON blocking_locks.locktype = blocked_locks.locktype
+AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+AND blocking_locks.pid != blocked_locks.pid
+JOIN pg_catalog.pg_stat_activity AS blocking_activity
+ON blocking_activity.pid = blocking_locks.pid
+WHERE NOT blocked_locks.granted;
+
+
+
+
+
+
+
+-- Find cardinality of index
+SELECT schema_name,
+       object_name,
+       object_type,
+       cardinality,
+       pages
+FROM (
+       SELECT pg_catalog.pg_namespace.nspname AS schema_name,
+              relname                         as object_name,
+              relkind                         as object_type,
+              reltuples                       as cardinality,
+              relpages                        as pages
+       FROM pg_catalog.pg_class
+              JOIN pg_catalog.pg_namespace ON relnamespace = pg_catalog.pg_namespace.oid
+     ) t
+WHERE schema_name NOT LIKE 'pg_%'
+  and schema_name <> 'information_schema'
+  --and schema_name = '$schema_name'
+  --and object_name = '$object_name'
+ORDER BY pages DESC, schema_name, object_name
+;
+
+
+
+
+-- INDEX DETAILS
+
+select
+    t.relname as table_name,
+    i.relname as index_name,
+    string_agg(a.attname, ',') as column_name
+from
+    pg_class t,
+    pg_class i,
+    pg_index ix,
+    pg_attribute a
+where
+    t.oid = ix.indrelid
+    and i.oid = ix.indexrelid
+    and a.attrelid = t.oid
+    and a.attnum = ANY(ix.indkey)
+    and t.relkind = 'r'
+    and t.relname not like 'pg_%'
+group by
+    t.relname,
+    i.relname
+order by
+    t.relname,
+    i.relname;
+
+
+
+
+
+-- Does table needs an Index
+SELECT relname, seq_scan-idx_scan AS too_much_seq, CASE WHEN seq_scan-idx_scan>0 THEN 'Missing Index' ELSE 'OK' END, pg_relation_size(relname::regclass) AS 
+rel_size, seq_scan, idx_scan FROM pg_stat_all_tables WHERE schemaname='websapp' AND pg_relation_size(relname::regclass)>80000 ORDER BY too_much_seq DESC;
+
+
+
+
+
+-- Waiting Clients
+select * from pg_stat_activity where waiting;
+
+-- Waiting Connections for a lock
+SELECT count(distinct pid) FROM pg_locks WHERE granted = false;
+
+-- Connections
+select client_addr, usename, datname, count(*) from pg_stat_activity group by 1,2,3 order by 4 desc;
+
+-- User Connections Ratio
+select count(*)*100/(select current_setting('max_connections')::int) from pg_stat_activity;
+
+
+
+---------------
+-- Vacuuming --
+---------------
+
+-- Last Vacuum and Analyze time
+select relname,last_vacuum, last_autovacuum, last_analyze, last_autoanalyze from pg_stat_user_tables;
+
+-- Total number of dead tuples need to be vacuumed per table
+select n_dead_tup, schemaname, relname from pg_stat_all_tables;
+
+-- Total number of dead tuples need to be vacuumed in DB
+select sum(n_dead_tup) from pg_stat_all_tables;
+
+
+
+
+SELECT attname As colname, n_distinct, most_common_vals AS common_vals,
+most_common_freqs As dist_freq
+FROM pg_stats
+WHERE tablename = 'demotable'
+ORDER BY schemaname, tablename, attname;
+
+
+
+==========================
+--- SHOW TABLE BLOATING
+==========================
+with foo as (
+  SELECT
+    schemaname, tablename, hdr, ma, bs,
+    SUM((1-null_frac)*avg_width) AS datawidth,
+    MAX(null_frac) AS maxfracsum,
+    hdr+(
+      SELECT 1+COUNT(*)/8
+      FROM pg_stats s2
+      WHERE null_frac<>0 AND s2.schemaname = s.schemaname AND s2.tablename = s.tablename
+    ) AS nullhdr
+  FROM pg_stats s, (
+    SELECT
+      (SELECT current_setting('block_size')::NUMERIC) AS bs,
+      CASE WHEN SUBSTRING(v,12,3) IN ('8.0','8.1','8.2') THEN 27 ELSE 23 END AS hdr,
+      CASE WHEN v ~ 'mingw32' THEN 8 ELSE 4 END AS ma
+    FROM (SELECT version() AS v) AS foo
+  ) AS constants
+  GROUP BY 1,2,3,4,5
+), rs as (
+  SELECT
+    ma,bs,schemaname,tablename,
+    (datawidth+(hdr+ma-(CASE WHEN hdr%ma=0 THEN ma ELSE hdr%ma END)))::NUMERIC AS datahdr,
+    (maxfracsum*(nullhdr+ma-(CASE WHEN nullhdr%ma=0 THEN ma ELSE nullhdr%ma END))) AS nullhdr2
+  FROM foo
+), sml as (
+  SELECT
+    schemaname, tablename, cc.reltuples, cc.relpages, bs,
+    CEIL((cc.reltuples*((datahdr+ma-
+      (CASE WHEN datahdr%ma=0 THEN ma ELSE datahdr%ma END))+nullhdr2+4))/(bs-20::FLOAT)) AS otta,
+    COALESCE(c2.relname,'?') AS iname, COALESCE(c2.reltuples,0) AS ituples, COALESCE(c2.relpages,0) AS ipages,
+    COALESCE(CEIL((c2.reltuples*(datahdr-12))/(bs-20::FLOAT)),0) AS iotta -- very rough approximation, assumes all cols
+  FROM rs
+  JOIN pg_class cc ON cc.relname = rs.tablename
+  JOIN pg_namespace nn ON cc.relnamespace = nn.oid AND nn.nspname = rs.schemaname AND nn.nspname <> 'information_schema'
+  LEFT JOIN pg_index i ON indrelid = cc.oid
+  LEFT JOIN pg_class c2 ON c2.oid = i.indexrelid
+)
+
+SELECT
+  current_database(), schemaname, tablename, /*reltuples::bigint, relpages::bigint, otta,*/
+  ROUND((CASE WHEN otta=0 THEN 0.0 ELSE sml.relpages::FLOAT/otta END)::NUMERIC,1) AS tbloat,
+  CASE WHEN relpages < otta THEN 0 ELSE bs*(sml.relpages-otta)::BIGINT END AS wastedbytes,
+  iname, /*ituples::bigint, ipages::bigint, iotta,*/
+  ROUND((CASE WHEN iotta=0 OR ipages=0 THEN 0.0 ELSE ipages::FLOAT/iotta END)::NUMERIC,1) AS ibloat,
+  CASE WHEN ipages < iotta THEN 0 ELSE bs*(ipages-iotta) END AS wastedibytes
+FROM sml
+ORDER BY wastedbytes DESC;
+
+
+
+#####################################
+
+Script to find all Objects of a Particular User
+
+select 
+    nsp.nspname as SchemaName
+    ,cls.relname as ObjectName 
+    ,rol.rolname as ObjectOwner
+    ,case cls.relkind
+        when 'r' then 'TABLE'
+        when 'm' then 'MATERIALIZED_VIEW'
+        when 'i' then 'INDEX'
+        when 'S' then 'SEQUENCE'
+        when 'v' then 'VIEW'
+        when 'c' then 'TYPE'
+        else cls.relkind::text
+    end as ObjectType
+from pg_class cls
+join pg_roles rol 
+	on rol.oid = cls.relowner
+join pg_namespace nsp 
+	on nsp.oid = cls.relnamespace
+where nsp.nspname not in ('information_schema', 'pg_catalog')
+    and nsp.nspname not like 'pg_toast%'
+    and rol.rolname = 'postgres'  
+order by nsp.nspname, cls.relname
+
+
+
+
+
+Create pg_buffercache module:
+
+CREATE EXTENSION pg_buffercache;
+Script to check the status of Shared Buffer:
+
+SELECT 
+    c.relname, 
+    count(*) AS buffers
+FROM pg_buffercache b 
+INNER JOIN pg_class c
+   ON b.relfilenode = pg_relation_filenode(c.oid) 
+    	AND b.reldatabase IN (0, (SELECT oid FROM pg_database
+WHERE datname = current_database()))
+GROUP BY c.relname
+ORDER BY 2 DESC;
+
+
+
+
+
+------- Script to find TOP 10 Long Running Queries using pg_stat_statements
+SELECT pd.datname,pss.query AS SQLQuery,pss.rows AS TotalRowCount,(pss.total_time / 1000 / 60) AS TotalMinute ,((pss.total_time / 1000 / 60)/calls) as TotalAverageTime		
+FROM pg_stat_statements AS pss INNER JOIN pg_database AS pd ON pss.dbid=pd.oid ORDER BY 1 DESC LIMIT 10;
+
+
+
+
+
+
+--------- Find a list of active Temp tables with Size and User information
+SELECT
+	n.nspname as SchemaName
+	,c.relname as RelationName
+	,CASE c.relkind
+	WHEN 'r' THEN 'table'
+	WHEN 'v' THEN 'view'
+	WHEN 'i' THEN 'index'
+	WHEN 'S' THEN 'sequence'
+	WHEN 's' THEN 'special'
+	END as RelationType
+	,pg_catalog.pg_get_userbyid(c.relowner) as RelationOwner               
+	,pg_size_pretty(pg_relation_size(n.nspname ||'.'|| c.relname)) as RelationSize
+FROM pg_catalog.pg_class c
+LEFT JOIN pg_catalog.pg_namespace n               
+                ON n.oid = c.relnamespace
+WHERE  c.relkind IN ('r','s') 
+AND  (n.nspname !~ '^pg_toast' and nspname like 'pg_temp%')
+ORDER BY pg_relation_size(n.nspname ||'.'|| c.relname) DESC;
+
+
+
+
+
+--------You can also find occupied size of Indexes, Total tuple read and scan by Indexes.
+SELECT
+    pt.tablename AS TableName
+    ,t.indexname AS IndexName
+    ,pc.reltuples AS TotalRows
+    ,pg_size_pretty(pg_relation_size(quote_ident(pt.tablename)::text)) AS TableSize
+    ,pg_size_pretty(pg_relation_size(quote_ident(t.indexrelname)::text)) AS IndexSize
+    ,t.idx_scan AS TotalNumberOfScan
+    ,t.idx_tup_read AS TotalTupleRead
+    ,t.idx_tup_fetch AS TotalTupleFetched
+FROM pg_tables AS pt
+LEFT OUTER JOIN pg_class AS pc 
+	ON pt.tablename=pc.relname
+LEFT OUTER JOIN
+( 
+	SELECT 
+		pc.relname AS TableName
+		,pc2.relname AS IndexName
+		,psai.idx_scan
+		,psai.idx_tup_read
+		,psai.idx_tup_fetch
+		,psai.indexrelname 
+	FROM pg_index AS pi
+	JOIN pg_class AS pc 
+		ON pc.oid = pi.indrelid
+	JOIN pg_class AS pc2 
+		ON pc2.oid = pi.indexrelid
+	JOIN pg_stat_all_indexes AS psai 
+		ON pi.indexrelid = psai.indexrelid 
+)AS T
+    ON pt.tablename = T.TableName
+WHERE pt.schemaname='public'
+ORDER BY 1;
+
+
+
+
+=======> Lock Monitoring queries:
+
+SELECT
+locktype,
+virtualtransaction,
+transactionid,
+nspname,
+relname,
+mode,
+granted,
+cast(date_trunc('second',query_start) AS timestamp) AS query_start,
+substr(current_query,1,25) AS query
+FROM
+pg_locks
+LEFT OUTER JOIN pg_class ON (pg_locks.relation = pg_class.oid)
+LEFT OUTER JOIN pg_namespace ON (pg_namespace.oid = pg_class.relnamespace),
+pg_stat_activity
+WHERE
+NOT pg_locks.pid=pg_backend_pid() AND
+pg_locks.pid=pg_stat_activity.procpid;
+
+
+
+====> table lock info
+
+SELECT
+locked.pid AS locked_pid,
+locker.pid AS locker_pid,
+locked_act.usename AS locked_user,
+locker_act.usename AS locker_user,
+locked.virtualtransaction,
+locked.transactionid,
+relname
+FROM
+pg_locks locked
+LEFT OUTER JOIN pg_class ON (locked.relation = pg_class.oid),
+pg_locks locker,
+pg_stat_activity locked_act,
+pg_stat_activity locker_act
+WHERE
+locker.granted=true AND
+locked.granted=false AND
+locked.pid=locked_act.procpid AND
+locker.pid=locker_act.procpid AND
+locked.relation=locker.relation;
+
+
+==> table size sorting
+SELECT
+nspname,
+relname,
+pg_size_pretty(pg_relation_size(C.oid)) AS "size"
+FROM pg_class C
+LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY pg_relation_size(C.oid) DESC
+LIMIT 20;
+
+
+
+SELECT
+nspname,
+relname,
+relkind as "type",
+pg_size_pretty(pg_table_size(C.oid)) AS size,
+pg_size_pretty(pg_indexes_size(C.oid)) AS idxsize,
+pg_size_pretty(pg_total_relation_size(C.oid)) as "total"
+FROM pg_class C
+LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE nspname NOT IN ('pg_catalog', 'information_schema') AND
+nspname !~ '^pg_toast' AND
+relkind IN ('r','i')
+ORDER BY pg_total_relation_size(C.oid) DESC
+LIMIT 20;
+
+
+
+
+
+===> BGWriter stats, checkpinting info.
+
+SELECT
+(100 * checkpoints_req) / (checkpoints_timed + checkpoints_req)
+AS checkpoints_req_pct,
+pg_size_pretty(buffers_checkpoint * block_size / (checkpoints_timed + checkpoints_req))
+AS avg_checkpoint_write,
+pg_size_pretty(block_size * (buffers_checkpoint + buffers_clean + buffers_backend)) AS total_written,
+100 * buffers_checkpoint / (buffers_checkpoint + buffers_clean + buffers_backend) AS checkpoint_write_pct,
+100 * buffers_backend / (buffers_checkpoint + buffers_clean + buffers_backend) AS backend_write_pct,
+*
+FROM pg_stat_bgwriter,(SELECT cast(current_setting('block_size') AS integer) AS block_size) AS bs;
+
+
+
+
+
+
+

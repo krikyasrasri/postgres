@@ -1,0 +1,219 @@
+Walfiles/datafiles/controlfiles
+
+Physical design -> HEX Format
+
+max_wal_size = 160 MB
+min_wal_size = 80 MB
+
+[postgres@lab03 pg_wal]$ ls -lrt
+total 65536
+drwx------ 2 postgres postgres        6 Jun  3 10:03 archive_status
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000001
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000002
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000003
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000004
+[postgres@lab03 pg_wal]$ psql -c "checkpoint";
+CHECKPOINT
+[postgres@lab03 pg_wal]$ ls -lrt
+total 65536
+drwx------ 2 postgres postgres        6 Jun  3 10:03 archive_status
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000005
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000006
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000007
+-rw------- 1 postgres postgres 16777216 Jun  3 10:12 000000010000000000000004
+[postgres@lab03 pg_wal]$
+
+Logical Design
+
+0000000 nul nul nul nul   h etb soh bel nul nul nul nul   $ nul can  us
+0000020 nul  sp eot  sp nul nul nul nul   X  us   D nul   8  us   @ nul
+0000040 can  us   < nul nul nul nul nul nul nul nul nul nul nul nul nul
+0000060 nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+0017620 nul nul nul nul nul nul nul nul enq stx nul nul nul nul nul nul
+0017640 nul nul nul nul nul nul nul nul etx nul soh nul stx  bs can nul
+0017660  cr   D   E   L   H   I nul nul eot stx nul nul nul nul nul nul
+0017700 nul nul nul nul nul nul nul nul stx nul soh nul stx  bs can nul
+0017720 dc1   C   H   E   N   N   A   I etx stx nul nul nul nul nul nul
+0017740 nul nul nul nul nul nul nul nul soh nul soh nul stx  bs can nul
+0017760 nak   H   Y   D   E   R   A   B   A   D nul nul nul nul nul nul
+0020000
+
+
+controlfile -> checkpoint information
+
+
+startup and shutdown
+--------------------
+
+
+Options for stop or restart:
+  -m, --mode=MODE        MODE can be "smart", "fast", or "immediate"
+
+Shutdown modes are:
+  smart       quit after all clients have disconnected
+  fast        quit directly, with proper shutdown (default)
+  immediate   quit without complete shutdown; will lead to recovery on restart
+
+
+
+1. stop accepting connections
+2. Abort ongoing transactions
+3. checkpoint
+4. shutdown
+
+-> database will start normally.
+
+1. crash your system
+
+-> recover 45, 46 and 47 from wals
+
+
+
+LOG:  received fast shutdown request
+LOG:  aborting any active transactions
+LOG:  background worker "logical replication launcher" (PID 8112) exited with exit code 1
+LOG:  shutting down
+LOG:  database system is shut down
+
+LOG:  listening on IPv6 address "::1", port 5432
+LOG:  listening on IPv4 address "127.0.0.1", port 5432
+LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+LOG:  database system was shut down at 2022-06-03 11:33:56 IST
+LOG:  database system is ready to accept connections
+
+
+000000010000000000000080
+000000010000000000000081
+000000010000000000000082
+000000010000000000000083
+000000010000000000000084
+000000010000000000000085
+000000010000000000000086
+
+
+[postgres@lab03 pg_wal]$ pg_controldata /u01/pgsql/11 | grep 'Latest checkpoint location'
+Latest checkpoint location:           0/8010B658
+[postgres@lab03 pg_wal]$
+
+CRASH
+
+2022-06-03 11:35:43.650 IST [9285] LOG:  received immediate shutdown request
+2022-06-03 11:35:43.654 IST [9291] WARNING:  terminating connection because of crash of another server process
+2022-06-03 11:35:43.654 IST [9291] DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+2022-06-03 11:35:43.654 IST [9291] HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+2022-06-03 11:35:43.661 IST [9285] LOG:  database system is shut down
+
+START AFTER CRASH
+
+2022-06-03 11:36:02.620 IST [9347] LOG:  starting PostgreSQL 13.7 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-44), 64-bit
+2022-06-03 11:36:02.621 IST [9347] LOG:  listening on IPv6 address "::1", port 5432
+2022-06-03 11:36:02.622 IST [9347] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2022-06-03 11:36:02.625 IST [9347] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2022-06-03 11:36:02.637 IST [9347] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2022-06-03 11:36:02.652 IST [9349] LOG:  database system was interrupted; last known up at 2022-06-03 11:34:09 IST
+2022-06-03 11:36:02.705 IST [9349] LOG:  database system was not properly shut down; automatic recovery in progress
+2022-06-03 11:36:02.709 IST [9349] LOG:  redo starts at 0/8010B6D0
+2022-06-03 11:36:03.042 IST [9349] LOG:  invalid record length at 0/8637AC28: wanted 24, got 0
+2022-06-03 11:36:03.042 IST [9349] LOG:  redo done at 0/8637ABF0
+2022-06-03 11:36:03.403 IST [9347] LOG:  database system is ready to accept connections
+
+000000010000000000000087
+000000010000000000000088
+000000010000000000000089
+00000001000000000000008A
+00000001000000000000008B
+00000001000000000000008C
+00000001000000000000008F
+00000001000000000000008D
+00000001000000000000008E
+
+
+
+redo starts at 0/A1E98660
+invalid record length at 0/A8008660: wanted 24, got 0
+redo done at 0/A8001660
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

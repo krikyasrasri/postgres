@@ -1,0 +1,65 @@
+
+cd /u01/pgsql/11
+tar -xf base.tar
+mv pg_wal.tar pg_wal
+cd pg_wal
+tar -xf pg_wal.tar
+rm -rf pg_wal.tar
+cd ../
+rm -rf base.tar
+
+task -1 
+
+Take a backup and restore in remote location
+----------------------------------------------
+pg_basebackup -D /u01/pgsql/11 -Ft -P -v --checkpoint=fast -h 192.168.47.252
+Extract backup pieces(base.tar and pg_wal.tar) and start
+
+task -2
+
+Take a backup and restore and apply archives generated after backup
+-------------------------------------------------------------------
+pg_basebackup -D /u01/pgsql/11 -Ft -P -v --checkpoint=fast -h 192.168.47.252
+
+recovery.conf
+restore_command = 'scp 192.168.47.252:/u01/archivelogs/%f %p'
+
+task -3
+
+Take a backup and restore and apply archives generated after backup upto certain point only
+-------------------------------------------------------------------------------------------
+
+recovery.conf
+restore_command = 'scp 192.168.47.252:/u01/archivelogs/%f %p'
+recovery_target_lsn = '0/89FF2BA8'
+
+task 4 (physical standby)
+--------------------------
+
+Take a backup and restore and apply archives and wait for next archive to generate.
+
+recovery.conf
+------------
+standby_mode = 'on'
+restore_command = 'scp 192.168.47.252:/u01/archivelogs/%f %p'
+trigger_file='/tmp/postgresql.trigger.5432'
+
+task 5 (physical standby and redo apply) 
+----------------------------------------
+Take a backup and restore and apply archives and don't wait for next archive to generate, simply go and read current wal of primary
+
+	
+
+
+
+
+
+
+	
+
+
+
+
+
+
+

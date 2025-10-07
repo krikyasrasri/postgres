@@ -1,0 +1,93 @@
+
+\?
+psql --help
+
+post installation steps
+--------------------------
+
+1. set password for postgres user.
+
+[postgres@lab03 14]$ psql
+psql (14.3)
+Type "help" for help.
+
+postgres=# \password
+Enter new password for user "postgres":
+Enter it again:
+postgres=#
+
+2. Enable external connectivity.
+
+listen_addresses = '*'							#postgresql.conf
+host    all    all    0.0.0.0/0     md5			#pg_hba.conf
+
+systemctl stop firewalld						#disable firewall/enable 5432 port
+or
+https://www.thegeekdiary.com/how-to-open-a-ports-in-centos-rhel-7/
+
+
+3. set parameters as per pgtune (https://pgtune.leopard.in.ua/)
+
+max_connections = 1000
+shared_buffers = 1GB
+effective_cache_size = 3GB
+maintenance_work_mem = 256MB
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
+work_mem = 5242kB
+min_wal_size = 2GB
+max_wal_size = 8GB
+max_worker_processes = 2
+max_parallel_workers_per_gather = 1
+max_parallel_workers = 2
+max_parallel_maintenance_workers = 1
+
+
+Changing a parameter
+---------------------
+
+add custom conf file -> include it in conf
+alter system commands
+
+
+psql
+
+psql --help   (use to login)
+
+psql -U <username> -d <dbname> -h <ip> -p <port>
+psql -U <username> -d <dbname> -h <ip> -p <port> -c "<command>";
+psql -U <username> -d <dbname> -h <ip> -p <port> -f "sqlfile";
+
+
+pgbench -> benchmarking...test
+
+.psqlrc -> purely optional
+
+
+
+
+
+
+
+
+
+
+yum -->
+
+postgres user automatically get created
+/var/lib/pgsql
+
+1)  use the same location
+
+2) userdel postgres
+   useradd postgres
+   
+3) mkdir -p /home/postgres
+   make this folder as default folder 
+
+
+
+

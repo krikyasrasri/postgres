@@ -1,0 +1,75 @@
+User administration
+-------------------
+
+create user hdfc_user with password 'hdfc_user';
+create database hdfc_db with owner 'hdfc_user';
+\q
+create schema hdfc_user;
+
+
+
+postgres=# create user hdfc_user with password 'hdfc_user';
+CREATE ROLE
+
+postgres=# create database hdfc_db with owner 'hdfc_user';
+CREATE DATABASE
+
+postgres=# \q
+
+[postgres@lab03 ~]$ psql -U hdfc_user -d hdfc_db
+psql (13.7)
+Type "help" for help.
+
+hdfc_db=> create schema hdfc_user;
+CREATE SCHEMA
+
+Databases
+-----------
+postgres   - default administrative connection database
+template0  - unmodifiable empty database
+template1  - default template for new databases
+
+Users/Schemas/Databases
+
+kfc_user -> username
+
+create table
+	
+	1) is there any schema with name kfc_user?
+	if yes, put your table there
+	if no, put it in public.
+	
+Search path?
+
+Where do I need to put my table?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

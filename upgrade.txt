@@ -1,0 +1,51 @@
+upgradation
+------------
+
+1. minor upgradation
+
+	13.x to 13.y
+		
+		-> stop your database   
+		-> uninstall old binaries
+		-> install new binaries
+		-> start your database
+	
+2. major upgradation
+
+	13.x to 14.y
+	
+		1) pg_dump
+		
+			1) export old database  (pg_dumpall > 137.sql)
+			2) import in new version
+			
+		2) pg_upgrade  systemctl start postgresql-14
+		
+			1. Install new binaries
+			2. initialize your cluster
+			3. stop old cluster (v13)
+		    4. Do pre-check (-c option)
+			5. upgrade your database
+			/usr/pgsql-14/bin/pg_upgrade -d /var/lib/pgsql/13/data  -D /var/lib/pgsql/14/data -b /usr/pgsql-13/bin -B /usr/pgsql-14/bin -c
+			6. optionally (remove old cluster, /var/lib/pgsql/13/data)
+		
+			1. Space
+			2. Time
+			3. If upgrade fails, You don't loose your old data directory
+			
+			with -k
+			
+			0****, have a valid backup before upgrading
+			1. You don't need extra space
+			2. would be completed in ~10 minor
+			3. Might lead to old data directory corruption if upgrade fails
+			4. Restore v13 from backup.
+		
+	   3) logical replication
+		
+		logical replication(v13 database -> v14 database)
+		
+		
+
+
+

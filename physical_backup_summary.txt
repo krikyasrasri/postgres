@@ -1,0 +1,30 @@
+
+Restore
+	-> Extract and start
+
+Restore+Apply archives
+
+	-> add recovery.signal file in data directory
+	-> in conf file, add restore_command
+	
+Restore+Apply archives+Until specified time(PITR)
+
+	-> add recovery.signal file in data directory
+	-> in conf file, modify restore_command
+	-> in conf file, modify recovery_target_lsn
+	
+Restore+Apply archives+wait for next to generate
+
+	-> add standby.signal file in data directory
+	-> in conf file, modify restore_command
+	-> in conf file, modify trigger file
+	
+Restore+Apply archives+wait for next to generate+stream current wal also
+
+    -> add standby.signal file in data directory
+    -> in conf file, modify restore_command
+    -> in conf file, modify trigger file
+    -> in conf file, modify primary conn info
+
+Restore a single database
+

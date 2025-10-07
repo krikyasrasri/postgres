@@ -1,0 +1,44 @@
+Run following steps in destination
+
+alter user hdfc_stage superuser;
+CREATE EXTENSION postgres_fdw;
+CREATE SERVER to_hdfc_db FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '192.168.47.143', port '5432', dbname 'hdfc_db');
+CREATE USER MAPPING FOR hdfc_stage SERVER to_hdfc_db OPTIONS (user 'hdfc_user', password 'hdfc_user');
+
+create schema hdfc_user;
+IMPORT FOREIGN SCHEMA hdfc_user FROM SERVER to_hdfc_db INTO hdfc_user;
+select count(1) from hdfc_user.pgbench_accounts;
+alter user hdfc_stage nosuperuser;
+ 
+[postgres@lab10 data]$ psql -U hdfc_stage -d hdfc_stagedb
+psql (13.7)
+Type "help" for help.
+
+hdfc_stagedb=> create schema hdfc_stage;
+CREATE SCHEMA
+hdfc_stagedb=>
+hdfc_stagedb=> \c - postgres
+You are now connected to database "hdfc_stagedb" as user "postgres".
+hdfc_stagedb=# alter user hdfc_stage superuser;
+ALTER ROLE
+hdfc_stagedb=# \c - hdfc_stage
+You are now connected to database "hdfc_stagedb" as user "hdfc_stage".
+hdfc_stagedb=# CREATE EXTENSION postgres_fdw;
+CREATE EXTENSION
+hdfc_stagedb=# CREATE SERVER to_hdfc_db FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '192.168.47.143', port '5432', dbname 'hdfc_db');
+CREATE SERVER
+hdfc_stagedb=# CREATE USER MAPPING FOR hdfc_stage SERVER to_hdfc_db OPTIONS (user 'hdfc_user', password 'hdfc_user');
+CREATE USER MAPPING
+hdfc_stagedb=# create schema hdfc_user;
+CREATE SCHEMA
+hdfc_stagedb=# IMPORT FOREIGN SCHEMA hdfc_user FROM SERVER to_hdfc_db INTO hdfc_user;
+IMPORT FOREIGN SCHEMA
+hdfc_stagedb=# select count(1) from hdfc_user.pgbench_accounts;
+ count
+--------
+ 100000
+(1 row)
+hdfc_stagedb=# alter user hdfc_stage nosuperuser;
+ALTER ROLE
+hdfc_stagedb=#
+

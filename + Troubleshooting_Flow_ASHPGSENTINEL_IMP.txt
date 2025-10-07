@@ -1,0 +1,124 @@
+SELECT pid, age(clock_timestamp(), query_start), usename, query 
+FROM pg_stat_activity 
+WHERE query != '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%' 
+ORDER BY query_start desc;
+
+
+
+select count(*), backend_type
+ from pg_active_session_history
+ where ash_time>=current_timestamp - interval '5 minutes'
+ group by backend_type
+ order by 1 desc
+;
+
+
+
+with ash as (
+ select *,ceil(extract(epoch from max(ash_time)over()-min(ash_time)over()))::numeric samples
+ from pg_active_session_history where ash_time>=current_timestamp - interval '5 minutes'
+) select round(count(*)::numeric/samples,2) as "AAS",
+    backend_type
+ from ash
+ group by samples,
+    backend_type
+ order by 1 desc fetch first 20 rows only
+;
+
+
+
+
+Drill down on wait events
+Adding the WAIT_EVENT_TYPE to the GROUP BY, I can have more detail about the resources used by those sessions:
+
+
+with ash as (
+ select *,ceil(extract(epoch from max(ash_time)over()-min(ash_time)over()))::numeric samples
+ from pg_active_session_history where ash_time>=current_timestamp - interval '5 minutes'
+) select round(count(*)::numeric/samples,2) as "AAS",
+    backend_type,wait_event_type
+ from ash
+ group by samples,
+    backend_type,wait_event_type
+ order by 1 desc fetch first 20 rows only
+;
+
+
+
+
+
+
+Drilling down to the wait event:
+
+
+with ash as (
+ select *,ceil(extract(epoch from max(ash_time)over()-min(ash_time)over()))::numeric samples
+ from pg_active_session_history where ash_time>=current_timestamp - interval '5 minutes'
+) select round(count(*)::numeric/samples,2) as "AAS",
+    backend_type,wait_event_type,wait_event
+ from ash
+ group by samples,
+    backend_type,wait_event_type,wait_event
+ order by 1 desc fetch first 20 rows only
+;
+
+
+
+
+
+
+
+Drill-down on queries
+This was a drill-down on the system axis (wait events are system call instrumentation). This is useful when we think something is wrong on the system or the storage. But performance tuning must also drive the investigation on the application axis. The higher level is the user call, the TOP_LEVEL_QUERY:
+
+
+with ash as (
+ select *,ceil(extract(epoch from max(ash_time)over()-min(ash_time)over()))::numeric samples
+ from pg_active_session_history where ash_time>=current_timestamp - interval '5 minutes'
+) select round(count(*)::numeric/samples,2) as "AAS",
+    backend_type,top_level_query
+ from ash
+ group by samples,
+    backend_type,top_level_query
+ order by 1 desc fetch first 20 rows only
+;
+
+
+
+
+
+
+
+The function we see in TOP_LEVEL_QUERY is itself running some queries, and the big advantage of the pgSentinel extension, over pg_stat_activity, is the capture of the actual statement running, with the actual values of the parameters:
+
+
+with ash as (
+ select *,ceil(extract(epoch from max(ash_time)over()-min(ash_time)over()))::numeric samples
+ from pg_active_session_history where ash_time>=current_timestamp - interval '5 minutes'
+) select round(count(*)::numeric/samples,2) as "AAS",
+    backend_type,substr(query,1,100)
+ from ash
+ group by samples,
+    backend_type,substr(query,1,100)
+ order by 1 desc fetch first 20 rows only
+;
+
+
+
+
+
+
+
+Finally, we can also aggregate at a higher level than QUERY with QUERYID which is per prepared statement and do not change when executing with different parameter values. If we want to get the text, then we can join with PG_STAT_STATEMENTS
+
+
+with ash as (
+ select *,datid dbid,ceil(extract(epoch from max(ash_time)over()-min(ash_time)over()))::numeric samples
+ from pg_active_session_history where ash_time>=current_timestamp - interval '5 minutes'
+) select round(count(*)::numeric/samples,2) as "AAS",dbid,
+    backend_type,queryid,pg_stat_statements.query
+ from ash left outer join pg_stat_statements using(dbid,queryid)
+ group by samples,dbid,
+    backend_type,queryid,pg_stat_statements.query
+ order by 1 desc fetch first 15 rows only
+;
