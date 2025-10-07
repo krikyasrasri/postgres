@@ -1,0 +1,147 @@
+1 table with 5 columns:
+
+emp(no,name,sal,delete employye,add employye);
+
+select * from emp;
+
+1,ram,1000,can delete?. can add?  (ur manager)
+
+1,ram,1000 (ur login)
+
+
+
+one company :
+
+hr: mgr (employees)
+it:mgr(employees)
+network:mgr(employees)
+admin:mgr(employyes)
+
+
+CREATE TABLE t_company(id serial,department text NOT NULL,manager text NOT NULL);
+
+CREATE TABLE t_manager(id serial,person  text,manager text,UNIQUE (person, manager));
+
+postgres=# select * from t_company;
+ id | department | manager
+----+------------+---------
+(0 rows)
+
+postgres=# select * from t_manager;
+ id | person | manager
+----+--------+---------
+(0 rows)
+
+
+
+first One will know, who is managing which department. 
+
+seconde will know,who will report to him. 
+
+The goal is to come up with a security policy, which ensures that somebody can only see own data or data from 
+departments on lower levels. 
+
+INSERT INTO t_manager (person, manager) VALUES ('hans', NULL),('paula', 'hans'),('berta', 'hans'),('manuel', 'paula'),
+('mike', 'paula'),('joe', 'berta'),('jack', 'berta'),('jane', 'berta');
+
+
+postgres=# select * from t_manager;
+ id | person | manager
+----+--------+---------
+  1 | hans   |
+  2 | paula  | hans
+  3 | berta  | hans
+  4 | manuel | paula
+  5 | mike   | paula
+  6 | joe    | berta
+  7 | jack   | berta
+  8 | jane   | berta
+(8 rows)
+
+
+As you can see “hans” has no manager. “paula” will report directly to “hans”. “manuel” will report to “paula” and so on.
+
+INSERT INTO t_company (department, manager) VALUES ('dep_1_1', 'joe'),('dep_1_2', 'jane'),('dep_1_3', 'jack'),('dep_2_1', 'mike'),('dep_2_2', 'manuel'),('dep_1', 'berta'),('dep_2', 'paula'),('dep', 'hans');
+
+postgres=# select * from t_company;
+ id | department | manager
+----+------------+---------
+  1 | dep_1_1    | joe
+  2 | dep_1_2    | jane
+  3 | dep_1_3    | jack
+  4 | dep_2_1    | mike
+  5 | dep_2_2    | manuel
+  6 | dep_1      | berta
+  7 | dep_2      | paula
+  8 | dep        | hans
+
+
+ALTER TABLE t_company ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY my_fancy_policy ON t_company USING (manager IN ( WITH RECURSIVE t AS (SELECT current_user AS person, NULL::text AS manager 
+FROM t_manager WHERE manager = CURRENT_USER UNION ALL SELECT m.person, m.manager FROM t_manager m INNER JOIN t ON t.person = m.manager) 
+SELECT person FROM t));
+
+postgres=# select * from pg_policies;
+ schemaname | tablename |   policyname    | permissive |  roles   | cmd |                          qual                          | with_check
+------------+-----------+-----------------+------------+----------+-----+--------------------------------------------------------+------------
+ public     | t_company | my_fancy_policy | PERMISSIVE | {public} | ALL | (manager IN ( WITH RECURSIVE t AS (                   +|
+            |           |                 |            |          |     |          SELECT CURRENT_USER AS person,               +|
+            |           |                 |            |          |     |             NULL::text AS manager                     +|
+            |           |                 |            |          |     |            FROM t_manager                             +|
+            |           |                 |            |          |     |           WHERE (t_manager.manager = CURRENT_USER)    +|
+            |           |                 |            |          |     |         UNION ALL                                     +|
+            |           |                 |            |          |     |          SELECT m.person,                             +|
+            |           |                 |            |          |     |             m.manager                                 +|
+            |           |                 |            |          |     |            FROM (t_manager m                          +|
+            |           |                 |            |          |     |              JOIN t t_1 ON ((t_1.person = m.manager)))+|
+            |           |                 |            |          |     |         )                                             +|
+            |           |                 |            |          |     |  SELECT t.person                                      +|
+            |           |                 |            |          |     |    FROM t))                                            |
+(1 row)
+
+
+postgres=# CREATE ROLE paula LOGIN;
+CREATE ROLE
+postgres=# GRANT ALL ON t_company TO paula;
+GRANT
+postgres=# GRANT ALL ON t_manager TO paula;
+GRANT
+postgres=# SET ROLE paula;
+SET
+postgres=> SELECT * FROM t_company;
+ id | department | manager
+----+------------+---------
+  4 | dep_2_1    | mike
+  5 | dep_2_2    | manuel
+  7 | dep_2      | paula
+(3 rows)
+
+here person mike and manuel reporting to paula, that is the reason only 2 persons and paula itself appearing.
+
+SET ROLE postgres;
+ 
+We can try the same thing with a second user and we will again achieve the desired results:
+ 
+ 
+CREATE ROLE hans LOGIN;
+GRANT ALL ON t_company TO hans;
+GRANT ALL ON t_manager TO hans;
+
+test=# SET role hans;
+SET
+test=> SELECT * FROM t_company;
+id  | department | manager
+----+------------+---------
+1   | dep_1_1    | joe
+2   | dep_1_2    | jane
+3   | dep_1_3    | jack
+4   | dep_2_1    | mike
+5   | dep_2_2    | manuel
+6   | dep_1      | berta
+7   | dep_2      | paula
+8   | dep        | hans
+(8 rows)
+
+here paula and berta reporting to hans, so underlying employees information also visible for hans.
+

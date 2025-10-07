@@ -1,0 +1,1006 @@
+Contents
+
+Scope
+
+Documents/Notes Reviewed and Followed
+
+Postgres versions:
+
+Minor version upgrade
+
+Major version upgrade
+
+i)       Traditional Method via pg_dump
+
+About logical backup:
+
+Steps:
+
+Postgres 9.3 to 9.6 upgrade using pg_dump steps:
+
+1) Logical backup
+
+2) Stop postgres cluster & take physical backup (failsafe)
+
+3) Install new binaries (9.6) & start cluster
+
+4) Restore logical backup
+
+5) Test connectivity & verify data
+
+ii)      Upgrade via pg_upgrade
+
+About pg_upgrade:
+
+Upgrade steps (9.3 to 9.6)
+
+Few more points about pg_upgrade
+
+Blackout plan:
+
+iii)     Upgrade Data via Replication
+
+ 
+
+ 
+
+Scope
+The scope of this document is to describe the methods of Postgres cluster from one version to latest version.
+
+Documents/Notes Reviewed and Followed
+ 
+
+https://www.postgresql.org/docs/9.2/static/app-pg-dumpall.html
+
+https://www.postgresql.org/docs/9.6/static/install-procedure.html
+
+https://www.postgresql.org/docs/9.6/static/pgupgrade.html
+
+https://www.youtube.com/watch?v=mqr7iN2ZSnY
+
+ 
+
+Postgres versions:
+Postgres major versions are represented by the first two digit groups of the version number. Ex: 8.4, 9.3, 9.6.
+
+Minor versions are represented by the third group of version digits. Ex: 9.3.2, 9.3.4.
+
+Minor version upgrade
+Minor releases never change the internal storage format and are always compatible with earlier and later minor releases of the same major version number.
+
+Ex: 8.4.2 is compatible with 8.4, 8.4.1 and 8.4.6.
+
+To update/upgrade between compatible versions, you simply replace the executables while the server is down and restart the server.
+
+The data directory remains unchanged — minor upgrades are that simple.
+
+Major version upgrade
+ 
+
+For Major releases the internal data storage format is subject to change.
+
+There many ways to upgrade major versions.
+
+Traditional method (dump & reload data via pg_dump) - this can be slow
+pg_upgrade – faster method (from 8.4 version)
+Replication method
+ 
+
+i)                    Traditional Method via pg_dump
+ 
+
+About logical backup:
+This method is to dump data from one major version of PostgreSQL and reload it in another.
+
+To do this, you must use a logical backup tool like pg_dumpall; file system level backup methods will not work.
+
+There are checks in place that prevent you from using a data directory with an incompatible version of PostgreSQL, so no great harm can be done by trying to start the wrong server version on a data directory.
+
+Steps:
+Take logical backup of db (to get consistent backup, make sure no db connections)
+Stop postgres cluster & take physical backup (failsafe)
+Install new version of Postgres binaries
+Load/restore logical backup
+Test connectivity & data
+Postgres 9.3 to 9.6 upgrade using pg_dump steps:
+ 
+
+1) Logical backup 
+[postgres@postgresupgpoc backups]$ pg_dump -h 127.1 -p 5422 -U postgres -d HQ > /opt/mis/pgdata/backups/HQ_pgdump.sql
+
+[postgres@postgresupgpoc backups]$
+
+ 
+
+[postgres@postgresupgpoc backups]$ ls -rlth /opt/mis/pgdata/backups/HQ_pgdump.sql
+
+-rw-rw-r-- 1 postgres postgres 21G Apr 18 10:33 /opt/mis/pgdata/backups/HQ_pgdump.sql
+
+[postgres@postgresupgpoc backups]$
+
+ 
+
+[postgres@postgresupgpoc backups]$ vim /opt/mis/pgdata/backups/HQ_pgdump.sql    -- validate backup(sql commands)
+
+ 
+
+ 
+
+2) Stop postgres cluster & take physical backup (failsafe)
+ 
+
+#pg_ctl –D $PGDATA stop
+
+#cd $PGDATA
+
+#cp -a /opt/mis/pgdata/hq /opt/mis/pgdata/hq
+
+#mv data data_9.3 (It is a good idea to rename the directory, rather than delete it)
+
+ 
+
+ 
+
+3) Install new binaries (9.6) & start cluster
+You can use rpm or yum installation method.
+
+Restore your previous pg_hba.conf and any postgresql.conf modifications.
+
+ 
+
+[postgres@postgresupgpoc ~]$ env|grep PG
+
+PGPORT=5433
+
+PGXLOG=/opt/mis/pglog/hq
+
+PGDATA=/opt/mis/pgdata/hq962
+
+PGBIN=/usr/pgsql-9.6/bin
+
+PGLOG=/opt/mis/pgdata/hq962/pg_log
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+[postgres@postgresupgpoc ~]$ pg_ctl -D $PGDATA start
+
+server starting
+
+[postgres@postgresupgpoc ~]$ < 2017-04-18 10:41:37.577 PDT > LOG:  redirecting log output to logging collector process
+
+< 2017-04-18 10:41:37.577 PDT > HINT:  Future log output will appear in directory "pg_log".
+
+^C
+
+[postgres@postgresupgpoc ~]$
+
+[postgres@postgresupgpoc ~]$ ps -ef|grep pg
+
+postgres 17062     1  0 01:57 ?        00:00:00 /usr/pgsql-9.3/bin/postgres -D /opt/mis/pgdata/hq
+
+postgres 20408     1  0 10:41 pts/2    00:00:00 /usr/pgsql-9.6/bin/postgres -D /opt/mis/pgdata/hq962
+
+postgres 20417 20370  0 10:41 pts/2    00:00:00 grep pg
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+ 
+
+ 
+
+4) Restore logical backup
+--create database
+
+psql# create database hq;
+
+psql#\l
+
+psql#\c hq
+
+hq=# \i /opt/mis/pgdata/backups/HQ_pgdump.sql ( infile - to restore)
+
+or
+
+#psql -d postgres -f /opt/mis/pgdata/backups/HQ_pgdump.sql
+
+ 
+5) Test connectivity & verify data
+Update env variable to point to new binaries and validate data.
+
+Create application user and made him owner of the database.
+
+ 
+
+hq=# create user hqadmin with password 'changeme';
+
+CREATE ROLE
+
+hq=# alter database hq owner hqadmin;
+
+ 
+
+ 
+
+The least downtime can be achieved by installing the new server in a different directory and running both the old and the new servers in parallel, on different ports. Then you can use something like:
+
+ 
+
+pg_dumpall –h 127.1 -p 5432 | psql -d postgres -p 5433 --to transfer your data.
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ii)                  Upgrade via pg_upgrade
+ 
+
+About pg_upgrade:
+pg_upgrade (formerly called pg_migrator) allows data stored in PostgreSQL data files to be upgraded to a later PostgreSQL major version without the data dump/reload typically required for major version upgrades.
+Major Postgres releases regularly add new features that often change the layout of the system tables, but the internal data storage format rarely changes.
+pg_upgrade supports upgrades from 8.4.X and later to the current major release of Postgres.(9.6.2).
+Size of the data f/s should be double of the current PGDATA.
+Adjust authentication - pg_upgrade will connect to the old and new servers several times, so you might want to set authentication to peer in pg_hba.conf or use a ~/.pgpass file.
+ 
+Upgrade steps (9.3 to 9.6)
+Check current env. & Optionally move the old cluster
+If your installation directory is not version-specific, e.g. /usr/local/pgsql, it is necessary to move the current PostgreSQL install directory so it does not interfere with the new PostgreSQL installation. 
+
+ 
+
+ 
+
+export PATH=$PATH:$HOME/bin:/usr/pgsql-9.3/bin
+
+export PGDATA=/opt/mis/pgdata/hq
+
+export PGBIN=/usr/pgsql-9.3/bin
+
+export PGLOG=$PGDATA/pg_log
+
+export PGXLOG=/opt/mis/pglog/hq
+
+export PGPORT=5422
+
+ 
+
+[postgres@postgresupgpoc pgdata]$ ps -ef|grep pg
+
+postgres 21325     1  0 22:37 pts/0    00:00:00 /usr/pgsql-9.3/bin/postgres -D /opt/mis/pgdata/hq
+
+postgres 21337 21278  0 22:37 pts/0    00:00:00 grep pg
+
+ 
+
+postgres=# \l
+
+                                  List of databases
+
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges  
+
+-----------+----------+----------+-------------+-------------+-----------------------
+
+ HQ        | hqadmin  | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+
+           |          |          |             |             | postgres=CTc/postgres
+
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | postgres=CTc/postgres+
+
+           |          |          |             |             | =c/postgres
+
+(4 rows)
+
+ 
+
+postgres=# \c HQ
+
+psql (9.6.2, server 9.3.16)
+
+You are now connected to database "HQ" as user "postgres".
+
+HQ=#
+
+ 
+
+Install the new PostgreSQL binaries
+ 
+
+ 
+
+ 
+
+postgresupgpoc{4}$ sudo /pkg/sysadmin/bin/duty add postgres.96
+
+Retrieving http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm
+
+Preparing...                ##################################################
+
+pgdg-centos96               ##################################################
+
+Loaded plugins: fastestmirror, security
+
+Setting up Install Process
+
+Loading mirror speeds from cached hostfile
+
+Resolving Dependencies
+
+--> Running transaction check
+
+---> Package postgis2_96.x86_64 0:2.3.2-1.rhel6 will be installed
+
+--> Processing Dependency: geos >= 3.5.0 for package: postgis2_96-2.3.2-1.rhel6.x86_64
+
+---> Package postgresql96.x86_64 0:9.6.2-2PGDG.rhel6 will be installed
+
+--> Processing Dependency: postgresql96-libs(x86-64) = 9.6.2-2PGDG.rhel6 for package: postgresql96-9.6.2-2PGDG.rhel6.x86_64
+
+---> Package postgresql96-contrib.x86_64 0:9.6.2-2PGDG.rhel6 will be installed
+
+---> Package postgresql96-plperl.x86_64 0:9.6.2-2PGDG.rhel6 will be installed
+
+---> Package postgresql96-server.x86_64 0:9.6.2-2PGDG.rhel6 will be installed
+
+--> Running transaction check
+
+---> Package geos.x86_64 0:3.4.2-1.rhel6 will be updated
+
+---> Package geos.x86_64 0:3.5.0-1.rhel6 will be an update
+
+---> Package postgresql96-libs.x86_64 0:9.6.2-2PGDG.rhel6 will be installed
+
+--> Finished Dependency Resolution
+
+ 
+
+Dependencies Resolved
+
+ 
+
+================================================================================
+
+ Package                   Arch        Version                Repository   Size
+
+================================================================================
+
+Installing:
+
+ postgis2_96               x86_64      2.3.2-1.rhel6          pgdg96      8.6 M
+
+ postgresql96              x86_64      9.6.2-2PGDG.rhel6      pgdg96      1.4 M
+
+ postgresql96-contrib      x86_64      9.6.2-2PGDG.rhel6      pgdg96      488 k
+
+ postgresql96-plperl       x86_64      9.6.2-2PGDG.rhel6      pgdg96       60 k
+
+ postgresql96-server       x86_64      9.6.2-2PGDG.rhel6      pgdg96      4.8 M
+
+Installing for dependencies:
+
+ postgresql96-libs         x86_64      9.6.2-2PGDG.rhel6      pgdg96      281 k
+
+Updating for dependencies:
+
+ geos                      x86_64      3.5.0-1.rhel6          pgdg96      553 k
+
+ 
+
+Transaction Summary
+
+================================================================================
+
+Install       6 Package(s)
+
+Upgrade       1 Package(s)
+
+ 
+
+Total download size: 16 M
+
+Downloading Packages:
+
+--------------------------------------------------------------------------------
+
+Total                                           4.5 MB/s |  16 MB     00:03    
+
+Running rpm_check_debug
+
+Running Transaction Test
+
+Transaction Test Succeeded
+
+Running Transaction
+
+Warning: RPMDB altered outside of yum.
+
+  Installing : postgresql96-libs-9.6.2-2PGDG.rhel6.x86_64                   1/8
+
+  Installing : postgresql96-9.6.2-2PGDG.rhel6.x86_64                        2/8
+
+  Installing : postgresql96-server-9.6.2-2PGDG.rhel6.x86_64                 3/8
+
+  Updating   : geos-3.5.0-1.rhel6.x86_64                                    4/8
+
+  Installing : postgis2_96-2.3.2-1.rhel6.x86_64                             5/8
+
+  Installing : postgresql96-plperl-9.6.2-2PGDG.rhel6.x86_64                 6/8
+
+  Installing : postgresql96-contrib-9.6.2-2PGDG.rhel6.x86_64                7/8
+
+  Cleanup    : geos-3.4.2-1.rhel6.x86_64                                    8/8
+
+  Verifying  : geos-3.5.0-1.rhel6.x86_64                                    1/8
+
+  Verifying  : postgresql96-9.6.2-2PGDG.rhel6.x86_64                        2/8
+
+  Verifying  : postgresql96-server-9.6.2-2PGDG.rhel6.x86_64                 3/8
+
+  Verifying  : postgresql96-libs-9.6.2-2PGDG.rhel6.x86_64                   4/8
+
+  Verifying  : postgresql96-plperl-9.6.2-2PGDG.rhel6.x86_64                 5/8
+
+  Verifying  : postgis2_96-2.3.2-1.rhel6.x86_64                             6/8
+
+  Verifying  : postgresql96-contrib-9.6.2-2PGDG.rhel6.x86_64                7/8
+
+  Verifying  : geos-3.4.2-1.rhel6.x86_64                                    8/8
+
+ 
+
+Installed:
+
+  postgis2_96.x86_64 0:2.3.2-1.rhel6                                           
+
+  postgresql96.x86_64 0:9.6.2-2PGDG.rhel6                                      
+
+  postgresql96-contrib.x86_64 0:9.6.2-2PGDG.rhel6                              
+
+  postgresql96-plperl.x86_64 0:9.6.2-2PGDG.rhel6                               
+
+  postgresql96-server.x86_64 0:9.6.2-2PGDG.rhel6                               
+
+ 
+
+Dependency Installed:
+
+  postgresql96-libs.x86_64 0:9.6.2-2PGDG.rhel6                                 
+
+ 
+
+Dependency Updated:
+
+  geos.x86_64 0:3.5.0-1.rhel6                                                  
+
+ 
+
+Complete!
+
+creating PAM file
+
+postgresupgpoc{5}$
+
+ 
+
+[postgres@postgresupgpoc ~]$ ls -rlth /usr/pgsql-9.6*
+
+/usr/pgsql-9.6:
+
+total 16K
+
+drwxr-xr-x 8 root root 4.0K Apr 17 04:43 share
+
+drwxr-xr-x 3 root root 4.0K Apr 17 04:43 doc
+
+drwxr-xr-x 2 root root 4.0K Apr 17 04:43 lib
+
+drwxr-xr-x 2 root root 4.0K Apr 17 04:43 bin
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+ 
+
+create new pgdata directory
+ 
+
+[postgres@postgresupgpoc ~]$ mkdir -p /opt/mis/pgdata/hq96
+
+ 
+
+Initialize the new PostgreSQL cluster using initdb.
+ 
+
+ 
+
+[postgres@postgresupgpoc ~]$ /usr/pgsql-9.6/bin/initdb -D /opt/mis/pgdata/hq96
+
+The files belonging to this database system will be owned by user "postgres".
+
+This user must also own the server process.
+
+ 
+
+The database cluster will be initialized with locale "en_US.UTF-8".
+
+The default database encoding has accordingly been set to "UTF8".
+
+The default text search configuration will be set to "english".
+
+ 
+
+Data page checksums are disabled.
+
+ 
+
+fixing permissions on existing directory /opt/mis/pgdata/hq96 ... ok
+
+creating subdirectories ... ok
+
+selecting default max_connections ... 100
+
+selecting default shared_buffers ... 128MB
+
+selecting dynamic shared memory implementation ... posix
+
+creating configuration files ... ok
+
+running bootstrap script ... ok
+
+performing post-bootstrap initialization ... ok
+
+syncing data to disk ... ok
+
+ 
+
+WARNING: enabling "trust" authentication for local connections
+
+You can change this by editing pg_hba.conf or using the option -A, or
+
+--auth-local and --auth-host, the next time you run initdb.
+
+ 
+
+Success. You can now start the database server using:
+
+ 
+
+    /usr/pgsql-9.6/bin/pg_ctl -D /opt/mis/pgdata/hq96 -l logfile start
+
+ 
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+[postgres@postgresupgpoc ~]$ ls -rlth /usr/pgsql-9.6/bin/pg_ctl
+
+-rwxr-xr-x 1 root root 41K Mar  5 01:44 /usr/pgsql-9.6/bin/pg_ctl
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+ 
+
+[postgres@postgresupgpoc ~]$  /usr/pgsql-9.6/bin/pg_ctl -D /opt/mis/pgdata/hq96 status
+
+pg_ctl: no server running
+
+     [postgres@postgresupgpoc ~]$
+
+ 
+
+ 
+
+ 
+
+ 
+
+Stop both servers
+Note: Streaming replication and log-shipping standby servers can remain running until a later step.
+
+ 
+
+ 
+
+[postgres@postgresupgpoc ~]$ /usr/pgsql-9.3/pg_ctl -D $PGDATA stop
+
+waiting for server to shut down.... done
+
+server stopped
+
+[postgres@postgresupgpoc ~]$ pg_ctl -D $PGDATA status
+
+pg_ctl: no server running
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+[postgres@postgresupgpoc ~]$  /usr/pgsql-9.6/bin/pg_ctl -D /opt/mis/pgdata/hq96 status
+
+pg_ctl: no server running
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+ 
+
+ 
+
+ 
+
+Run pg_upgrade of the new server.(9.6)
+Obviously, no one should be accessing the clusters during the upgrade.
+
+ 
+
+ 
+
+cd 9.6/bin
+
+./pg_upgrade  --help
+
+ 
+
+pg_upgrade -b oldbindir -B newbindir -d olddatadir -D newdatadir [option...]
+
+ 
+
+[postgres@postgresupgpoc hq]$  /usr/pgsql-9.6/bin/pg_upgrade  -d /opt/mis/pgdata/hq -D /opt/mis/pgdata/hq96 -b /usr/pgsql-9.3/bin -B /usr/pgsql-9.6/bin
+
+Performing Consistency Checks
+
+-----------------------------
+
+Checking cluster versions                                   ok
+
+Checking database user is the install user                  ok
+
+Checking database connection settings                       ok
+
+Checking for prepared transactions                          ok
+
+Checking for reg* system OID user data types                ok
+
+Checking for contrib/isn with bigint-passing mismatch       ok
+
+Checking for roles starting with 'pg_'                      ok
+
+Checking for invalid "line" user columns                    ok
+
+Creating dump of global objects                             ok
+
+Creating dump of database schemas
+
+                                                            ok
+
+Checking for presence of required libraries                 ok
+
+Checking database user is the install user                  ok
+
+Checking for prepared transactions                          ok
+
+ 
+
+If pg_upgrade fails after this point, you must re-initdb the
+
+new cluster before continuing.
+
+ 
+
+Performing Upgrade
+
+------------------
+
+Analyzing all rows in the new cluster                       ok
+
+Freezing all rows on the new cluster                        ok
+
+Deleting files from new pg_clog                             ok
+
+Copying old pg_clog to new server                           ok
+
+Setting next transaction ID and epoch for new cluster       ok
+
+Deleting files from new pg_multixact/offsets                ok
+
+Copying old pg_multixact/offsets to new server              ok
+
+Deleting files from new pg_multixact/members                ok
+
+Copying old pg_multixact/members to new server              ok
+
+Setting next multixact ID and offset for new cluster        ok
+
+Resetting WAL archives                                      ok
+
+Setting frozenxid and minmxid counters in new cluster       ok
+
+Restoring global objects in the new cluster                 ok
+
+Restoring database schemas in the new cluster
+
+                                                            ok
+
+Copying user relation files
+
+                                                            ok
+
+Setting next OID for new cluster                            ok
+
+Sync data directory to disk                                 ok
+
+Creating script to analyze new cluster                      ok
+
+Creating script to delete old cluster                       ok
+
+ 
+
+Upgrade Complete
+
+----------------
+
+Optimizer statistics are not transferred by pg_upgrade so,
+
+once you start the new server, consider running:
+
+    ./analyze_new_cluster.sh
+
+ 
+
+Running this script will delete the old cluster's data files:
+
+    ./delete_old_cluster.sh
+
+[postgres@postgresupgpoc hq]$
+
+ 
+
+ 
+
+ 
+
+7)  Copy configuration files from old PGDATA and Start postgres instance using new binary location & validate the data
+
+ 
+
+[postgres@postgresupgpoc hq96]$ pwd
+
+/opt/mis/pgdata/hq96
+
+[postgres@postgresupgpoc hq96]$ cp -p /opt/mis/pgdata/hq/postgresql.conf postgresql.conf
+
+[postgres@postgresupgpoc hq96]$ cp -p /opt/mis/pgdata/hq/pg_hba.conf .
+
+[postgres@postgresupgpoc hq96]$
+
+ 
+
+[postgres@postgresupgpoc ~]$  /usr/pgsql-9.6/bin/pg_ctl -D /opt/mis/pgdata/hq96 start
+
+server starting
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+[postgres@postgresupgpoc ~]$ ps -ef|grep pg
+
+postgres 27736     1  0 23:25 pts/1    00:00:00 /usr/pgsql-9.6/bin/postgres -D /opt/mis/pgdata/hq96
+
+postgres 27752 26285  0 23:25 pts/1    00:00:00 grep pg
+
+[postgres@postgresupgpoc ~]$
+
+[postgres@postgresupgpoc ~]$ psql -p 5422
+
+psql (9.6.2)
+
+Type "help" for help.
+
+ 
+
+postgres=# \l
+
+                                  List of databases
+
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges  
+
+-----------+----------+----------+-------------+-------------+-----------------------
+
+ HQ        | hqadmin  | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+
+           |          |          |             |             | postgres=CTc/postgres
+
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | postgres=CTc/postgres+
+
+           |          |          |             |             | =c/postgres
+
+(4 rows)
+
+ 
+
+ 
+
+8) Run analyze_new_clsuter.sh & uninstall old postgres(optional)
+
+./analyze_new_clsuter.sh  (from directory you executed pg_upgrade utility)
+
+ 
+
+ 
+
+#root
+
+cd /opt/postgres-9.3/bin/
+
+./uninstall-postgresql
+
+ 
+
+ 
+
+ 
+
+Few more points about pg_upgrade
+You can also specify user and port values, and whether you want the data linked instead of copied (the default).
+If you use link mode, the upgrade will be much faster (no file copying) and use less disk space, but you will not be able to access your old cluster once you start the new cluster after the upgrade.
+Link mode also requires that the old and new cluster data directories be in the same file system.
+You can use pg_upgrade --check to perform only the checks, even if the old server is still running. pg_upgrade --check will also outline any manual adjustments you will need to make after the upgrade.
+If you are going to be using link mode, you should use the --link option with --check to enable link-mode-specific checks. pg_upgrade requires write permission in the current directory.
+pg_upgrade defaults to running servers on port 50432 to avoid unintended client connections. You can use the same port number for both clusters when doing an upgrade because the old and new clusters will not be running at the same time. However, when checking an old running server, the old and new port numbers must be different.
+If an error occurs while restoring the database schema, pg_upgrade will exit and you will have to revert to the old cluster.
+Statistics are NOT analyzed after upgrade, we need to run the analyze script provided at the end of the upgrade.
+Verify standby servers - If you are upgrading Streaming Replication and Log-Shipping standby servers, verify that the old standby servers are caught up by running pg_controldata against the old primary and standby clusters. Verify that the "Latest checkpoint location" values match in all clusters. (There will be a mismatch if old standby servers were shut down before the old primary.)
+ 
+
+Blackout plan:
+Stop postgres cluster from 9.6 (upgraded version)
+ 
+
+ 
+
+[postgres@postgresupgpoc ~]$ psql
+
+psql (9.6.2)
+
+Type "help" for help.
+
+ 
+
+postgres=# \q
+
+[postgres@postgresupgpoc ~]$ pg_ctl -D $PGDATA status
+
+pg_ctl: server is running (PID: 7206)
+
+/usr/pgsql-9.6/bin/postgres "-D" "/opt/mis/pgdata/hq96"
+
+[postgres@postgresupgpoc ~]$
+
+[postgres@postgresupgpoc ~]$ pg_ctl -D $PGDATA stop
+
+waiting for server to shut down.... done
+
+server stopped
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+ 
+
+2) Edit env variables to point to old postgres binaries, PGDATA & start instance
+
+ 
+
+[postgres@postgresupgpoc ~]$ env|grep PG
+
+PGPORT=5422
+
+PGXLOG=/opt/mis/pglog/hq
+
+PGDATA=/opt/mis/pgdata/hq
+
+PGBIN=/usr/pgsql-9.3/bin
+
+PGLOG=/opt/mis/pgdata/hq/pg_log
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+[postgres@postgresupgpoc ~]$ pg_ctl -D $PGDATA start
+
+server starting
+
+[postgres@postgresupgpoc ~]$ 2017-04-18 01:57:55 PDT [17062]: [1-1]  user=,db=,remote=LOG:  redirecting log output to logging collector process
+
+2017-04-18 01:57:55 PDT [17062]: [2-1]  user=,db=,remote=HINT:  Future log output will appear in directory "pg_log".
+
+[postgres@postgresupgpoc ~]$
+
+ 
+
+3) Verify database connectivity
+
+[postgres@postgresupgpoc ~]$ psql -h 127.0.1
+
+psql (9.6.2, server 9.3.16)
+
+Type "help" for help.
+
+ 
+
+postgres=# \l
+
+                                  List of databases
+
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges  
+
+-----------+----------+----------+-------------+-------------+-----------------------
+
+ HQ        | hqadmin  | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+
+           |          |          |             |             | postgres=CTc/postgres
+
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | postgres=CTc/postgres+
+
+           |          |          |             |             | =c/postgres
+
+(04 rows)
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+iii)                Upgrade Data via Replication
+ 
+
+It is also possible to use certain replication methods, such as Slony, to create a standby server with the updated version of PostgreSQL.
+This is possible because Slony supports replication between different major versions of PostgreSQL. The standby can be on the same computer or a different computer.
+Once it has synced up with the master server (running the older version of PostgreSQL), you can switch masters and make the standby the master and shut down the older database instance. Such a switch-over results in only several seconds of downtime for an upgrade.

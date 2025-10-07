@@ -1,0 +1,175 @@
+login as: root
+Last login: Mon Jun 11 13:14:08 2012 from 192.168.18.5
+[root@localhost ~]# pwd
+/root
+[root@localhost ~]# mkdir softwares
+[root@localhost ~]# ls -lrt
+total 152
+-rw-r--r--. 1 root root 15863 Jun  7 16:31 install.log.syslog
+-rw-r--r--. 1 root root 89748 Jun  7 16:37 install.log
+-rw-------. 1 root root  5833 Jun  7 16:37 anaconda-ks.cfg
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Videos
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Templates
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Public
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Pictures
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Music
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Downloads
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Documents
+drwxr-xr-x. 2 root root  4096 Jun  7 16:43 Desktop
+drwxr-xr-x. 2 root root  4096 Jun 12 12:00 Softwares
+[root@localhost ~]# cd softwares
+
+Download postgres software dump from our ftpsite(192.168.0.249)-common/database/postgres/postgresql-7.4.27.tar.gz
+
+place this dump into /root/software
+
+
+[root@localhost Softwares]# ls -lrt
+total 12432
+-rwxr-xr-x. 1 root root 12709661 Jun 12 12:00 postgresql-7.4.27.tar.gz
+[root@localhost Softwares]# tar -xvzf postgresql-7.4.27.tar.gz
+........
+........
+postgresql-7.4.27/config/python.m4
+postgresql-7.4.27/config/tcl.m4
+[root@localhost Softwares]# ls -lrt
+total 12436
+drwxrwxrwx. 6  258  258     4096 Dec 10  2009 postgresql-7.4.27
+-rwxr-xr-x. 1 root root 12709661 Jun 12 12:00 postgresql-7.4.27.tar.gz
+[root@localhost Softwares]#
+[root@localhost Softwares]# cd postgresql-7.4.27
+[root@localhost postgresql-7.4.27]# ls -lrt
+total 952
+-rw-r--r--.  1 258 258   1432 Feb 10  2001 Makefile
+-rw-r--r--.  1 258 258    442 Sep  5  2002 aclocal.m4
+-rw-r--r--.  1 258 258   1376 Nov 12  2002 README
+-rw-r--r--.  1 258 258   1192 Aug  5  2003 COPYRIGHT
+-rw-r--r--.  1 258 258   3460 Jun 14  2004 GNUmakefile.in
+-rwxr-xr-x.  1 258 258 524053 Dec 10  2009 configure
+-rw-r--r--.  1 258 258  40439 Dec 10  2009 configure.in
+-rw-r--r--.  1 258 258 322943 Dec 10  2009 HISTORY
+-rw-r--r--.  1 258 258  40816 Dec 10  2009 INSTALL
+drwxrwxrwx. 15 258 258   4096 Jun 12 12:01 src
+drwxrwxrwx.  4 258 258   4096 Jun 12 12:01 doc
+drwxrwxrwx. 50 258 258   4096 Jun 12 12:01 contrib
+drwxrwxrwx.  2 258 258   4096 Jun 12 12:01 config
+[root@localhost postgresql-7.4.27]#  ./configure --without-readline  --without-zlib
+.......
+.......
+.......
+config.status: linking ./src/backend/port/sysv_shmem.c to src/backend/port/pg_shmem.c
+config.status: linking ./src/backend/port/dynloader/linux.h to src/include/dynloader.h
+config.status: linking ./src/include/port/linux.h to src/include/pg_config_os.h
+config.status: linking ./src/makefiles/Makefile.linux to src/Makefile.port
+[root@localhost postgresql-7.4.27]#
+[root@localhost postgresql-7.4.27]# gmake install
+......
+......
+......
+gcc -O2 -fno-strict-aliasing -Wall -Wmissing-prototypes -Wmissing-declarations -Wno-error -fpic -shared -Wl,-soname,libplpgsql.so.1 pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o  -L../../../../src/port   -o libplpgsql.so.1.0
+rm -f libplpgsql.so.1
+ln -s libplpgsql.so.1.0 libplpgsql.so.1
+rm -f libplpgsql.so
+ln -s libplpgsql.so.1.0 libplpgsql.so
+/bin/sh ../../../../config/install-sh -c -m 755  libplpgsql.so.1.0 /usr/local/pgsql/lib/plpgsql.so
+gmake[4]: Leaving directory `/root/Softwares/postgresql-7.4.27/src/pl/plpgsql/src'
+gmake[3]: Leaving directory `/root/Softwares/postgresql-7.4.27/src/pl/plpgsql'
+gmake[2]: Leaving directory `/root/Softwares/postgresql-7.4.27/src/pl'
+gmake[1]: Leaving directory `/root/Softwares/postgresql-7.4.27/src'
+PostgreSQL installation complete.
+[root@localhost postgresql-7.4.27]#
+[root@localhost postgresql-7.4.27]# cp /root/software/postgresql-7.4.27/contrib/start-scripts/linux /etc/init.d/postgresql-7.4.27
+[root@localhost postgresql-7.4.27]# chmod 775 /etc/init.d/postgresql-7.4.27
+[root@localhost postgresql-7.4.27]# chkconfig --add /etc/init.d/postgresql-7.4.27
+[root@localhost postgresql-7.4.27]# adduser postgres -d /usr/local/pgsql
+adduser: warning: the home directory already exists.
+Not copying any file from skel directory into it.
+[root@localhost postgresql-7.4.27]# passwd postgres
+Changing password for user postgres.
+New password:
+BAD PASSWORD: it is too simplistic/systematic
+Retype new password:
+passwd: all authentication tokens updated successfully.
+[root@localhost postgresql-7.4.27]#
+[root@localhost postgresql-7.4.27]# echo 'PATH=/usr/local/pgsql/bin:$PATH; export PATH' > /etc/profile.d/postgresql.sh
+[root@localhost postgresql-7.4.27]# echo 'MANPATH=/usr/local/pgsql/man:$MANPATH; export MANPATH' >> /etc/profile.d/pgmanual.sh
+[root@localhost postgresql-7.4.27]# chmod 775 /etc/profile.d/postgresql.sh
+[root@localhost postgresql-7.4.27]# chmod 775 /etc/profile.d/pgmanual.sh
+[root@localhost postgresql-7.4.27]# mkdir -p /var/log/pgsql
+[root@localhost postgresql-7.4.27]# chown -R postgres:postgres /var/log/pgsql/
+[root@localhost postgresql-7.4.27]# mkdir /usr/local/pgsql/data
+[root@localhost postgresql-7.4.27]# chown -R postgres:postgres /usr/local/pgsql/data
+[root@localhost postgresql-7.4.27]# chown -R postgres:postgres /usr/local/pgsql
+[root@localhost postgresql-7.4.27]# su - postgres
+-bash-4.1$ /usr/local/pgsql/bin/initdb -U postgres -D /usr/local/pgsql/data
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale en_US.UTF-8.
+
+fixing permissions on existing directory /usr/local/pgsql/data... ok
+creating directory /usr/local/pgsql/data/base... ok
+creating directory /usr/local/pgsql/data/global... ok
+creating directory /usr/local/pgsql/data/pg_xlog... ok
+creating directory /usr/local/pgsql/data/pg_clog... ok
+selecting default max_connections... 100
+selecting default shared_buffers... 1000
+creating configuration files... ok
+creating template1 database in /usr/local/pgsql/data/base/1... ok
+initializing pg_shadow... ok
+enabling unlimited row size for system tables... ok
+initializing pg_depend... ok
+creating system views... ok
+loading pg_description... ok
+creating conversions... ok
+setting privileges on built-in objects... ok
+creating information schema... ok
+vacuuming database template1... ok
+copying template1 to template0... ok
+
+Success. You can now start the database server using:
+
+    /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
+or
+    /usr/local/pgsql/bin/pg_ctl -D /usr/local/pgsql/data -l logfile start
+
+-bash-4.1$
+-bash-4.1$ pwd
+/usr/local/pgsql
+-bash-4.1$ cd data
+-bash-4.1$ ls -lrt
+total 36
+-rw-------. 1 postgres postgres 7882 Jun 12 12:16 postgresql.conf
+drwx------. 2 postgres postgres 4096 Jun 12 12:16 pg_xlog
+-rw-------. 1 postgres postgres    4 Jun 12 12:16 PG_VERSION
+-rw-------. 1 postgres postgres 1441 Jun 12 12:16 pg_ident.conf
+-rw-------. 1 postgres postgres 3289 Jun 12 12:16 pg_hba.conf
+drwx------. 2 postgres postgres 4096 Jun 12 12:16 pg_clog
+drwx------. 2 postgres postgres 4096 Jun 12 12:16 global
+drwx------. 4 postgres postgres 4096 Jun 12 12:16 base
+-bash-4.1$ vi postgresql.conf
+----------- uncomment the parameter port=5432 -----------
+-bash-4.1$exit
+[root@localhost postgresql-7.4.27]# /etc/init.d/postgresql-7.4.27 start
+Starting PostgreSQL: ok
+[root@localhost postgresql-7.4.27]#
+[root@localhost postgresql-7.4.27]# su - postgres
+-bash-4.1$ createdb test
+CREATE DATABASE
+-bash-4.1$ psql test
+Welcome to psql 7.4.27, the PostgreSQL interactive terminal.
+
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
+
+test=# \q
+-bash-4.1$ exit
+logout
+[root@localhost postgresql-7.4.27]#init 6
+
+
+
+

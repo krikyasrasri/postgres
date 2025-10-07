@@ -1,0 +1,1224 @@
+
+oracle/ms sql/db2  to postgresql migration happening:
+
+we have postgresql in 3 areas:
+
+->open source postgresql: migrate oracle data to open source postgresql. (ora2pg) 
+
+->aws rds/ec2 postgresql ( Schema conversition tool (this will convert complete schemas to postgresql standard), DMS (data migration
+service tool kit to copy the data)
+
+https://aws.amazon.com/dms/schema-conversion-tool/  (end points)  (schema conversion tool)
+
+https://aws.amazon.com/dms/ ( data migration service tool kit)
+
+
+
+->edb postgresql ( EDB MTK s/w, EDB team will help you ) : 
+
+$ ./runMTK.sh -allSchemas  -offlineMigration (it will create dump from oracle by converting according to EDB postgresql env)
+
+https://www.enterprisedb.com/edb-docs/d/edb-postgres-migration-toolkit/user-guides/user-guide/52.0.3/mtk_command_options.html
+
+
+oracle to postgresql migration:
+-------------------------------
+oracle to open source postgresql : ora2pg
+
+oracle to EDB PostgreSQL : we have tool called EDB MTK , migration took kit, 
+
+Oracle to AWS PostgreSQL : SCT (schema conversion tool--this tool will convert all the structure of oracle to postgresql, and provide you
+
+output file/ steaming)
+
+DMS (data migration service tool kit )--this to migrate only data form Oracle to AWS postgresql.
+
+if you want to migrate to EDB or AWS , it will be licensed, eveything respective team will help you .
+
+for now if you want to migrate to open source postgresql we have stabilized s/w ora2pg free s/w, we have number of third party tools as well.
+
+for ora2pg installation we need below given requirements.
+
+sqlines,dbconverter..
+
+requirement:
+-----------------------
+1.install oracle
+2.install postgresql
+3.install perl
+4.install ora2pg
+
+perl installation:
+==================
+download perl:
+--------------
+https://platform.activestate.com/ramdwdt26/ActivePerl-5.26/distributions?new_project=true
+
+
+[root@localhost ora2pg-20.0]# tar -xvf ActivePerl-5.26.3.0000-x86_64-linux-glibc-2.12-432e1938.tar.gz
+
+[root@localhost ora2pg-20.0]# cd ActivePerl-5.26.3.0000-x86_64-linux-glibc-2.12-432e1938/
+
+[root@localhost ActivePerl-5.26.3.0000-x86_64-linux-glibc-2.12-432e1938]# ls -ltr
+total 12
+drwxr-xr-x. 8 root root   68 Nov  7 09:54 perl
+-rw-r--r--. 1 root root  485 Nov  7 09:54 README.txt
+-rwxr-xr-x. 1 root root  203 Nov  7 09:54 install.sh
+drwxr-xr-x. 2 root root 4096 Nov  7 09:54 support
+[root@localhost ActivePerl-5.26.3.0000-x86_64-linux-glibc-2.12-432e1938]#
+
+[root@localhost ActivePerl-5.26.3.0000-x86_64-linux-glibc-2.12-432e1938]# ./install.sh
+Checking package...done
+
+Welcome to ActivePerl
+
+
+    This installer can install ActivePerl in any location of your
+    choice. You do not need root privileges.  However, please make sure
+    that you have write access to this location.
+
+Enter top level directory for install? [/opt/ActivePerl-5.26] /opt/ActivePerl-5.26
+
+    The ActivePerl documentation is available in HTML format.  If installed
+    it will be available from file:///opt/ActivePerl-5.26/html/index.html.
+    If not installed you will still be able to read all the basic perl and
+    module documentation using the man or perldoc utilities.
+
+Install HTML documentation [no] yes
+Ok.
+
+    The typical ActivePerl software installation requires 200 megabytes.
+    Please make sure enough free space is available before continuing.
+
+Proceed? [yes] yes
+Ok.
+
+Installing ActivePerl...
+Copying files to /opt/ActivePerl-5.26...done
+Relocating...done (299 files relocated)
+Generating HTML documentation...done
+Syncing perl PPM database with .packlists...done
+
+ActivePerl has been successfully installed at /opt/ActivePerl-5.26.
+
+Please modify your startup environment by adding:
+
+   /opt/ActivePerl-5.26/site/bin:/opt/ActivePerl-5.26/bin to PATH
+   /opt/ActivePerl-5.26/site/man:/opt/ActivePerl-5.26/man to MANPATH
+
+For general questions or comments about ActivePerl, please
+contact us at <support@activestate.com>.
+
+Thank you for using ActivePerl!
+
+[root@localhost ActivePerl-5.26.3.0000-x86_64-linux-glibc-2.12-432e1938]# cd
+
+--------------------------------------------
+Install Ora2pg:
+--------------------------------------------
+[root@localhost pgsql]# wget https://sourceforge.net/projects/ora2pg/files/20.0/ora2pg-20.0.tar.bz2
+
+[root@localhost pgsql]# tar -xvf ora2pg-20.0.tar.bz2
+
+[root@localhost oracle]# cd ora2pg-20.0/
+
+[root@localhost ora2pg-20.0]# ls -ltr
+total 516
+drwxr-xr-x. 2 ram ram     40 Jan 18  2019 scripts
+-rw-r--r--. 1 ram ram 141485 Jan 18  2019 README
+drwxr-xr-x. 5 ram ram     59 Jan 18  2019 packaging
+-rw-r--r--. 1 ram ram    180 Jan 18  2019 MANIFEST
+-rw-r--r--. 1 ram ram  65104 Jan 18  2019 Makefile.PL
+-rw-r--r--. 1 ram ram  32472 Jan 18  2019 LICENSE
+drwxr-xr-x. 3 ram ram     35 Jan 18  2019 lib
+-rw-r--r--. 1 ram ram     21 Jan 18  2019 INSTALL
+drwxr-xr-x. 2 ram ram     38 Jan 18  2019 doc
+-rw-r--r--. 1 ram ram 275669 Jan 18  2019 changelog
+[root@localhost ora2pg-20.0]#
+[root@localhost ora2pg-20.0]#
+
+[root@localhost ora2pg-20.0]# /opt/ActivePerl-5.26/bin/perl Makefile.PL
+Checking if your kit is complete...
+Looks good
+Invalid LICENSE value 'GPLv3' ignored
+Generating a Unix-style Makefile
+Writing Makefile for Ora2Pg
+Invalid LICENSE value 'GPLv3' ignored
+Writing MYMETA.yml and MYMETA.json
+
+Done...
+------------------------------------------------------------------------------
+Please read documentation at http://ora2pg.darold.net/ before asking for help
+------------------------------------------------------------------------------
+Now type: make && make install
+
+
+[root@localhost ora2pg-20.0]# make && make install
+
+cp lib/Ora2Pg.pm blib/lib/Ora2Pg.pm
+cp lib/Ora2Pg/PLSQL.pm blib/lib/Ora2Pg/PLSQL.pm
+cp lib/Ora2Pg/MySQL.pm blib/lib/Ora2Pg/MySQL.pm
+cp lib/Ora2Pg/GEOM.pm blib/lib/Ora2Pg/GEOM.pm
+cp scripts/ora2pg blib/script/ora2pg
+"/opt/ActivePerl-5.26/bin/perl-static" -MExtUtils::MY -e 'MY->fixin(shift)' -- blib/script/ora2pg
+cp scripts/ora2pg_scanner blib/script/ora2pg_scanner
+"/opt/ActivePerl-5.26/bin/perl-static" -MExtUtils::MY -e 'MY->fixin(shift)' -- blib/script/ora2pg_scanner
+Manifying 1 pod document
+Manifying 1 pod document
+Installing /opt/ActivePerl-5.26/html/site/lib/Ora2Pg.html
+Installing /opt/ActivePerl-5.26/html/site/lib/Ora2Pg/MySQL.html
+Installing /opt/ActivePerl-5.26/html/site/lib/Ora2Pg/PLSQL.html
+Installing /opt/ActivePerl-5.26/site/lib/Ora2Pg.pm
+Installing /opt/ActivePerl-5.26/site/lib/Ora2Pg/PLSQL.pm
+Installing /opt/ActivePerl-5.26/site/lib/Ora2Pg/MySQL.pm
+Installing /opt/ActivePerl-5.26/site/lib/Ora2Pg/GEOM.pm
+Installing /opt/ActivePerl-5.26/site/man/man3/ora2pg.3
+Installing /opt/ActivePerl-5.26/site/bin/ora2pg
+Installing /opt/ActivePerl-5.26/site/bin/ora2pg_scanner
+Installing default configuration file (ora2pg.conf.dist) to /etc/ora2pg
+Appending installation info to /opt/ActivePerl-5.26/lib/perllocal.pod
+
+--------------------------------------------------
+configuration setup:
+--------------------------------------------------
+cd /etc/ora2pg
+
+cp ora2pg.conf.dist ora2pg.conf
+
+edit the file with oracle details
+
+ORACLE_HOME     /u01/app/oracle/product/12.2.0.1
+ORACLE_DSN      dbi:Oracle:host=localhost;sid=oradb;port=1521
+ORACLE_USER     system
+ORACLE_PWD      oradba123
+ORA_INITIAL_COMMAND commit
+EXPORT_SCHEMA   1
+SCHEMA          TEST (for multiple schemas SCHEMA  FIRST SECOND THIRD ..)
+CREATE_SCHEMA   1
+OUTPUT          output.sql
+OUTPUT_DIR      /tmp/
+SKIP    fkeys pkeys ukeys indexes checks
+DATADIFF_WORK_MEM       256 MB
+DATADIFF_TEMP_BUFFERS   512 MB
+TYPE            TABLE PACKAGE INSERT VIEW GRANT TABLESPACE PARTITION MVIEW DBLINK
+PARALLEL_MIN_ROWS               100000
+
+
+
+[oracle@localhost ~]$ . oraenv
+ORACLE_SID = [oracle] ? oradb
+The Oracle base has been set to /u01/app/oracle
+
+or 
+
+[root@localhost ora2pg]# export ORACLE_HOME=/u01/app/oracle/product/12.2.0.1
+[root@localhost ora2pg]# export LD_LIBRARY_PATH=/u01/app/oracle/product/12.2.0.1/lib
+
+
+
+[root@localhost bin]# cd /usr/bin
+[root@localhost bin]#ln -s /opt/ActivePerl-5.26/site/bin/ora2pg ora2pg
+[root@localhost bin]#chown -R oracle:dba ora2pg
+
+=====================================
+load some sample data into oracle:
+====================================
+
+table creation with blob data type:
+-----------------------------------
+in oracle blob objects will cotnains seperate files, but in postgresql all columns data will be stored in one file.
+
+SQL> CREATE TABLE RAM.IMAGE(ID INTEGER PRIMARY KEY,Subject VARCHAR(256),Body BLOB);
+
+Table created.
+
+
+
+SQL> insert into RAM.IMAGE(ID,Subject,Body) values (1,'ENGLISH',hextoraw('453d7a34'));
+
+1 row created.
+
+SQL> insert into RAM.IMAGE(ID,Subject,Body) values (2,'ENGLISH',hextoraw('453d7a34'));
+
+1 row created.
+
+SQL> insert into RAM.IMAGE(ID,Subject,Body) values (3,'ENGLISH',hextoraw('453d7a34'));
+
+1 row created.
+
+SQL>
+
+SQL> SELECT OWNER,SEGMENT_NAME,SEGMENT_TYPE,TABLESPACE_NAME FROM dba_segments where owner='RAM';  (oracle schema and user both r same)
+
+OWNER                SEGMENT_NAME                   SEGMENT_TYPE       TABLESPACE_NAME
+-------------------- ------------------------------ ------------------ -------------------------
+RAM                  EMP                            TABLE              USERS
+RAM                  IMAGE                          TABLE              RAM_TBS
+RAM                  SYS_IL0000073606C00003$$       LOBINDEX           RAM_TBS
+RAM                  SYS_C007354                    INDEX              RAM_TBS
+RAM                  SYS_LOB0000073606C00003$$      LOBSEGMENT         RAM_TBS
+
+
+
+partitioned tables:
+-----------------
+
+CREATE TABLE ram.invoices
+(invoice_no    NUMBER NOT NULL,
+ invoice_date  DATE   NOT NULL,
+ comments      VARCHAR2(500))
+PARTITION BY RANGE (invoice_date)
+(PARTITION invoices_q1 VALUES LESS THAN (TO_DATE('01/04/2001', 'DD/MM/YYYY')) TABLESPACE users,
+ PARTITION invoices_q2 VALUES LESS THAN (TO_DATE('01/07/2001', 'DD/MM/YYYY')) TABLESPACE users,
+ PARTITION invoices_q3 VALUES LESS THAN (TO_DATE('01/09/2001', 'DD/MM/YYYY')) TABLESPACE users,
+ PARTITION invoices_q4 VALUES LESS THAN (TO_DATE('01/01/2002', 'DD/MM/YYYY')) TABLESPACE users);
+
+SQL> insert into RAM.invoices(INVOICE_NO,INVOICE_DATE,COMMENTS) values(1,'26/04/2001','tes mesage');
+
+1 row created.
+
+SQL> insert into RAM.invoices(INVOICE_NO,INVOICE_DATE,COMMENTS) values(1,'25-MAR-2001','i love india');
+
+1 row created.
+
+SQL> insert into RAM.invoices(INVOICE_NO,INVOICE_DATE,COMMENTS) values(4,'28-FEB-2001','test me');
+
+1 row created.
+
+
+
+SQL> insert into RAM.invoices(INVOICE_NO,INVOICE_DATE,COMMENTS) values(4,'28-MAY-2001','test me');
+
+1 row created.
+
+SQL> insert into RAM.invoices(INVOICE_NO,INVOICE_DATE,COMMENTS) values(8,'28-JUL-2001','test me');
+
+1 row created.
+
+SQL> insert into RAM.invoices(INVOICE_NO,INVOICE_DATE,COMMENTS) values(8,'28-SEP-2001','test me');
+
+1 row created.
+
+SQL>
+
+
+SQL> create index RAM.invoices_idx on RAM.invoices(INVOICE_NO);
+
+Index created.
+
+SQL>create tablespace TEST_TBS datafile '/u01/app/oracle/oradata/ramdb/test1.dbf';
+
+
+each data file with tablespace :
+
+select TABLESPACE_NAME,FILE_NAME from dba_data_files
+
+
+TABLESPACE_NAME                FILE_NAME
+------------------------------ ------------------------------------------------------------
+SYSTEM                         /u01/app/oracle/oradata/ramdb/system01.dbf
+SYSAUX                         /u01/app/oracle/oradata/ramdb/sysaux01.dbf
+TEST_TBS                       /u01/app/oracle/oradata/ramdb/test1.dbf
+USERS                          /u01/app/oracle/oradata/ramdb/users01.dbf
+UNDOTBS1                       /u01/app/oracle/oradata/ramdb/undotbs01.dbf
+
+
+
+
+SQL> SELECT OWNER,SEGMENT_NAME,SEGMENT_TYPE,TABLESPACE_NAME FROM dba_segments where owner='RAM';
+
+OWNER                SEGMENT_NAME                   SEGMENT_TYPE       TABLESPACE_NAME
+-------------------- ------------------------------ ------------------ -------------------------
+RAM                  EMP                            TABLE              USERS
+RAM                  INVOICES                       TABLE PARTITION    USERS
+RAM                  INVOICES                       TABLE PARTITION    USERS
+RAM                  INVOICES                       TABLE PARTITION    USERS
+RAM                  INVOICES                       TABLE PARTITION    USERS
+
+
+OWNER                     OBJECT_NAME               OBJECT_TYPE
+------------------------- ------------------------- -----------------------
+RAM                       DEPT                      TABLE
+RAM                       EMP                       TABLE
+RAM                       EMP_V                     VIEW
+RAM                       IMAGE                     TABLE
+RAM                       SYS_C007357               INDEX
+RAM                       SYS_IL0000073792C00003$$  INDEX
+RAM                       SYS_LOB0000073792C00003$$ LOB
+RAM                       INVOICES                  TABLE PARTITION
+RAM                       INVOICES                  TABLE PARTITION
+RAM                       INVOICES                  TABLE PARTITION
+RAM                       INVOICES                  TABLE PARTITION
+RAM                       INVOICES                  TABLE
+RAM                       INVOICES_IDX              INDEX
+
+13 rows selected.
+
+SQL> 1
+  1* select OWNER,object_name,object_type from dba_objects where owner='RAM'
+
+
+
+for error validation:
+====================
+[oracle@node2 migration]$ ora2pg -t SHOW_VERSION -c /etc/ora2pg/ora2pg.conf
+Oracle Database 12c Standard Edition Release 12.2.0.1.0
+[oracle@node2 migration]$
+
+
+Estimation report:
+==================
+$ ora2pg -t SHOW_REPORT --estimate_cost -c ora2pg.conf
+ora2pg -t show_report  --estimate_cost -c /etc/ora2pg/ora2pg.conf --dump_as_html > /tmp/ora2pg.html
+ora2pg -d -c /etc/ora2pg/ora2pg.conf
+
+->timing for migration
+
+->issues while migration
+
+->how much success percent stragiht forward.
+
+ora2pg -c ora2pg.conf -d (migration actual run)
+
+->it will generate output.sql file.
+
+->in oracle schema means user, but in postgresql scheam different and user different.
+
+->wahtever schema you are xporting from oracle, with same name you need to create user in postgresql.
+
+->in oracle tablesapce will contains data files, but in postgresql will contains folder/directory.
+
+->replcae create tablespace statment in output.sql (with directory)  
+
+go to postgresql server:
+-----------------------
+in oracle schema, postgresql it will be user, so we need to create user with the schema name.
+
+->
+-bash-4.2$ psql
+psql.bin (10.10.18)
+Type "help" for help.
+
+edb=# create user RAM;
+CREATE ROLE
+
+->create tablespace statements grep from /tmp/output.sql.
+->edit the statement according to postgresql.
+
+restore output file of ora2pg into postgresql:
+----------------------------------------------
+-bash-4.2$ nohup psql -f /tmp/output.sql &
+SET
+CREATE SCHEMA
+ALTER SCHEMA
+SET
+CREATE TABLE
+
+
+validation of test schema:
+-------------------------
+-bash-4.2$ psql
+psql.bin (10.10.18)
+Type "help" for help.
+
+edb=# \dn
+       List of schemas
+     Name     |    Owner
+--------------+--------------
+ enterprisedb | enterprisedb
+ public       | enterprisedb
+ test         | test
+(3 rows)
+
+edb=# \dt test.*;
+          List of relations
+ Schema | Name | Type  |    Owner
+--------+------+-------+--------------
+ test   | emp  | table | enterprisedb
+(1 row)
+
+
+edb=# select count(*) from test.emp;
+ count
+-------
+     0
+
+
+by default ora2pg will export only tables and grants with only metadata:
+
+
+to export data below is the syntax:
+-----------------------------------
+
+
+ -d -t COPY command to export only Data, for mutliple tables we can export data a time by mentioning option a.
+
+[oracle@localhost ~]$ ora2pg -d -t COPY -a emp
+
+schema name already there in ora2pg.conf file, so we need to mention only table.
+
+for multiple tables:  ora2pg -d -t COPY -a EMP,DEPT
+
+[2019-11-10 02:52:36] Ora2Pg version: 20.0
+[2019-11-10 02:52:36] Trying to connect to database: dbi:Oracle:host=localhost;sid=oradb;port=1521
+[2019-11-10 02:52:36] Isolation level: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+[2019-11-10 02:52:36] DEBUG: executing initial command to Oracle: commit
+[2019-11-10 02:52:36] Retrieving table information...
+[2019-11-10 02:52:57] [1] Scanning table EMP (1 rows)...
+[2019-11-10 02:52:57] Trying to connect to database: dbi:Oracle:host=localhost;sid=oradb;port=1521
+[2019-11-10 02:52:57] Isolation level: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+[2019-11-10 02:52:57] DEBUG: executing initial command to Oracle: commit
+[2019-11-10 02:52:57] Retrieving partitions information...
+[2019-11-10 02:53:06] Dropping foreign keys of table EMP...
+[2019-11-10 02:53:06] Looking how to retrieve data from EMP...
+[2019-11-10 02:53:06] DEGUG: Query sent to Oracle: SELECT "NO" FROM "TEST"."EMP" a
+[2019-11-10 02:53:06] Fetching all data from EMP tuples...
+[2019-11-10 02:53:07] DEBUG: number of rows 8 extracted from table EMP
+[2019-11-10 02:53:07] DEBUG: Formatting bulk of 10000 data (real: 8 rows) for PostgreSQL.
+[2019-11-10 02:53:07] DEBUG: Creating output for 10000 tuples
+[2019-11-10 02:53:07] Dumping data from EMP to file: output.sql
+[2019-11-10 02:53:07] Extracted records from table EMP: total_records = 8 (avg: 8 recs/sec)
+
+[========================>] 8/1 total rows (800.0%) - (1 sec., avg: 8 recs/sec).
+[2019-11-10 02:53:07] Restoring foreign keys of table EMP...
+[2019-11-10 02:53:07] Total time to export data from 1 tables (0 partitions, 0 sub-partitions) and 1 total rows: 10 wallclock secs ( 0.02 usr +  0.00 sys =  0.02 CPU)
+[2019-11-10 02:53:07] Speed average: 0.10 rows/sec
+
+
+output file:
+------------
+[oracle@localhost ~]$ cat /tmp/output_data.sql
+
+SET search_path = test;
+BEGIN;
+ALTER TABLE emp DISABLE TRIGGER USER;
+
+TRUNCATE TABLE emp;
+SET search_path = test;
+
+
+COPY emp (no) FROM STDIN;
+1
+1
+1
+1
+1
+1
+1
+1
+\.
+
+ALTER TABLE emp ENABLE TRIGGER USER;
+COMMIT;
+
+
+
+
+import into postgresql:
+----------------------
+
+->we can skip ora2pg for data migration.
+
+->export only data from oracle plain format, then psql -f output file
+
+-bash-4.2$ psql -f /tmp/output.sql
+SET
+BEGIN
+ALTER TABLE
+TRUNCATE TABLE
+SET
+COPY 8
+ALTER TABLE
+COMMIT
+-bash-4.2$ psql
+psql.bin (10.10.18)
+Type "help" for help.
+
+edb=# select count(*) from test.emp;
+ count
+-------
+     8
+
+export with grants from oracle:
+--------------------------------
+[oracle@localhost ~]$ ora2pg -d -g
+
+================================
+second approach for migration:
+================================
+[oracle@node2 ora2pg-20.0]$ ora2pg -d -c /var/lib/oracle/ora2pg-20.0/ora2pg.conf
+
+or
+
+generate migration template:
+============================
+mkdir /var/lib/oracle/migration/
+[oracle@node2 migration]$ ora2pg --project_base /var/lib/oracle/migration/ --init_project test_project
+Creating project test_project.
+
+cd /var/lib/oracle/migration//test_project/
+        schema/
+                dblinks/
+                directories/
+                functions/
+                grants/
+                mviews/
+                packages/
+                partitions/
+                procedures/
+                sequences/
+                synonyms/
+                tables/
+                tablespaces/
+                triggers/
+                types/
+                views/
+        sources/
+                functions/
+                mviews/
+                packages/
+                partitions/
+                procedures/
+                triggers/
+                types/
+                views/
+        data/
+        config/
+        reports/
+
+Generating generic configuration file
+Creating script export_schema.sh to automate all exports.
+Creating script import_all.sh to automate all imports.
+
+
+[oracle@node2 migration]$
+
+vi export_schema.sh
+namespace=/var/lib/oracle/migration/test_project/
+esc :%s/config\/ora2pg.conf/ora2pg.conf/g
+
+./export_schema.sh (conver all structure with suitable to postgresql)
+
+ora2pg -t COPY -o data.sql -b /var/lib/oracle/migration/test_project/data -c /var/lib/oracle/migration/test_project/ora2pg.conf (data export)
+
+once schema converstion and data export done, which schema we have exported in oracle, with the same name user need to create
+in postgresql.
+
+1. Table :
+
+ora2pg -c ora2pg.conf -t TABLE -o tables.sql -b schema/tables/
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/tables/tables.sql
+
+
+2.Sequence:
+
+ora2pg -c ora2pg.conf -t SEQUENCE -o sequence.sql -b schema/sequences/
+
+Once sequence.sql file is created in schema/sequences/ directory then
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/sequences/sequence.sql
+
+3.Function:
+
+ora2pg -c ora2pg.conf -t FUNCTION -o function.sql -b schema/functions
+
+Once function.sql file is created in schema/functions/ directory then
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/functions/function.sql
+
+
+4.Procedure:
+
+ora2pg -c ora2pg.conf -t PROCEDURE -o procedure.sql -b schema/ procedures
+
+Once procedure.sql file is created in schema/procedures/ directory then
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/procedures/procedure.sql
+
+5.Triggers:
+
+ora2pg -c ora2pg.conf -t TRIGGER -o trigger.sql -b schema/ triggers
+
+Once trigger.sql file is created in schema/triggers/ directory then
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/triggers/trigger.sql
+
+6.View:
+
+ora2pg -c ora2pg.conf -t VIEW -o view.sql -b schema/ views
+
+Once view.sql file is created in schema/views/ directory then
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/views/view.sql
+
+7.Package:
+
+ora2pg -c ora2pg.conf -t PACKAGE -o package.sql -b schema/packages
+
+Once package.sql file is created in schema/packages directory then
+
+psql -h server_name(or path) -d database_name -U postgres_user_name -p 5432 -a -q -f schema/packages/package.sql
+
+9.Ora2pg step by step :
+
+Below are the two commands which will be used for data copy
+
+ora2pg -c ora2pg.conf -t COPY -o data.sql -b schema/data/
+
+ora2pg -c ora2pg.conf -t INSERT -o data.sql -b schema/data/
+
+
+  Generating generic configuration file
+  Creating script export_schema.sh to automate all exports.
+  Creating script import_all.sh to automate all imports.
+
+http://ora2pg.darold.net/documentation.html
+
+
+Parameter PG_SCHEMA  is for setting the target schema name
+
+
+ora2pg -t COPY -o data.sql -b /var/lib/oracle/migration/test_project/data -c /var/lib/oracle/migration/test_project/ora2pg.conf
+
+
+[oracle@localhost ~]$ ora2pg -d
+[2019-11-10 02:24:38] Ora2Pg version: 20.0
+[2019-11-10 02:24:38] Trying to connect to database: dbi:Oracle:host=localhost;sid=oradb;port=1521
+[2019-11-10 02:24:38] Isolation level: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+[2019-11-10 02:24:38] DEBUG: executing initial command to Oracle: commit
+[2019-11-10 02:24:38] Looking forward functions declaration in schema TEST.
+[2019-11-10 02:24:39] Retrieving table information...
+[2019-11-10 02:26:32] [1] Scanning table EMP (1 rows)...
+[2019-11-10 02:26:35] Dumping table EMP...
+
+
+[root@localhost bin]# cat /tmp/output.sql
+-- Generated by Ora2Pg, the Oracle database Schema converter, version 20.0
+-- Copyright 2000-2019 Gilles DAROLD. All rights reserved.
+-- DATASOURCE: dbi:Oracle:host=localhost;sid=oradb;port=1521
+
+SET client_encoding TO 'UTF8';
+
+\set ON_ERROR_STOP ON
+
+CREATE SCHEMA test;
+ALTER SCHEMA test OWNER TO test;
+
+SET search_path = test;
+
+CREATE TABLE emp (
+        no numeric(38)
+) ;
+
+
+
+
+use below link for reference:
+-----------------------------
+https://dbvisit.atlassian.net/wiki/spaces/ugd9/pages/333414402/Data+Instantiation+for+PostgreSQL+step-by-step+guide
+
+https://ora2pg.darold.net/documentation.html#Oracle-schema-to-export
+
+oracle : ram : emp
+
+postgresql: ram, emp-->to make emp table owner as ram, need ram user.
+
+ramtbs: /var/lib/oracle.dbf (oracle)
+ramtbs :/var/lib/oracle/ (postgresql)
+
+
+
+
+
+for additional information follow the help instructions:
+--------------------------------------------------------
+[oracle@localhost ~]$ ora2pg --help
+
+Usage: ora2pg [-dhpqv --estimate_cost --dump_as_html] [--option value]
+
+    -a | --allow str  : Comma separated list of objects to allow from export.
+                        Can be used with SHOW_COLUMN too.
+    -b | --basedir dir: Set the default output directory, where files
+                        resulting from exports will be stored.
+    -c | --conf file  : Set an alternate configuration file other than the
+                        default /etc/ora2pg/ora2pg.conf.
+    -d | --debug      : Enable verbose output.
+    -D | --data_type STR : Allow custom type replacement at command line.
+    -e | --exclude str: Comma separated list of objects to exclude from export.
+                        Can be used with SHOW_COLUMN too.
+    -h | --help       : Print this short help.
+    -g | --grant_object type : Extract privilege from the given object type.
+                        See possible values with GRANT_OBJECT configuration.
+    -i | --input file : File containing Oracle PL/SQL code to convert with
+                        no Oracle database connection initiated.
+    -j | --jobs num   : Number of parallel process to send data to PostgreSQL.
+    -J | --copies num : Number of parallel connections to extract data from Oracle.
+    -l | --log file   : Set a log file. Default is stdout.
+    -L | --limit num  : Number of tuples extracted from Oracle and stored in
+                        memory before writing, default: 10000.
+    -m | --mysql      : Export a MySQL database instead of an Oracle schema.
+    -n | --namespace schema : Set the Oracle schema to extract from.
+    -N | --pg_schema schema : Set PostgreSQL's search_path.
+    -o | --out file   : Set the path to the output file where SQL will
+                        be written. Default: output.sql in running directory.
+    -p | --plsql      : Enable PLSQL to PLPGSQL code conversion.
+    -P | --parallel num: Number of parallel tables to extract at the same time.
+    -q | --quiet      : Disable progress bar.
+    -s | --source DSN : Allow to set the Oracle DBI datasource.
+    -t | --type export: Set the export type. It will override the one
+                        given in the configuration file (TYPE).
+    -T | --temp_dir DIR: Set a distinct temporary directory when two
+                         or more ora2pg are run in parallel.
+    -u | --user name  : Set the Oracle database connection user.
+                        ORA2PG_USER environment variable can be used instead.
+    -v | --version    : Show Ora2Pg Version and exit.
+    -w | --password pwd : Set the password of the Oracle database user.
+                        ORA2PG_PASSWD environment variable can be used instead.
+    --forceowner      : Force ora2pg to set tables and sequences owner like in
+                  Oracle database. If the value is set to a username this one
+                  will be used as the objects owner. By default it's the user
+                  used to connect to the Pg database that will be the owner.
+    --nls_lang code: Set the Oracle NLS_LANG client encoding.
+    --client_encoding code: Set the PostgreSQL client encoding.
+    --view_as_table str: Comma separated list of views to export as table.
+    --estimate_cost   : Activate the migration cost evaluation with SHOW_REPORT
+    --cost_unit_value minutes: Number of minutes for a cost evalution unit.
+                  default: 5 minutes, corresponds to a migration conducted by a
+                  PostgreSQL expert. Set it to 10 if this is your first migration.
+   --dump_as_html     : Force ora2pg to dump report in HTML, used only with
+                        SHOW_REPORT. Default is to dump report as simple text.
+   --dump_as_csv      : As above but force ora2pg to dump report in CSV.
+   --dump_as_sheet    : Report migration assessment with one CSV line per database.
+   --init_project NAME: Initialise a typical ora2pg project tree. Top directory
+                        will be created under project base dir.
+   --project_base DIR : Define the base dir for ora2pg project trees. Default
+                        is current directory.
+   --print_header     : Used with --dump_as_sheet to print the CSV header
+                        especially for the first run of ora2pg.
+   --human_days_limit num : Set the number of human-days limit where the migration
+                        assessment level switch from B to C. Default is set to
+                        5 human-days.
+   --audit_user LIST  : Comma separated list of usernames to filter queries in
+                        the DBA_AUDIT_TRAIL table. Used only with SHOW_REPORT
+                        and QUERY export type.
+   --pg_dsn DSN       : Set the datasource to PostgreSQL for direct import.
+   --pg_user name     : Set the PostgreSQL user to use.
+   --pg_pwd password  : Set the PostgreSQL password to use.
+   --count_rows       : Force ora2pg to perform a real row count in TEST action.
+   --no_header        : Do not append Ora2Pg header to output file
+   --oracle_speed     : Use to know at which speed Oracle is able to send
+                        data. No data will be processed or written.
+   --ora2pg_speed     : Use to know at which speed Ora2Pg is able to send
+                        transformed data. Nothing will be written.
+
+See full documentation at https://ora2pg.darold.net/ for more help or see
+manpage with 'man ora2pg'.
+
+ora2pg will return 0 on success, 1 on error. It will return 2 when a child
+process has been interrupted and you've gotten the warning message:
+    "WARNING: an error occurs during data export. Please check what's happen."
+Most of the time this is an OOM issue, first try reducing DATA_LIMIT value.
+
+
+
+
+
+
+
+-------------------------------
+in ora2pg configuration file :
+
+schemanames
+port
+dbname
+
+these are the mandatory.
+listenr should be up and running.
+
+out file name and directory should be coorect.
+
+once dump done , what ever the schemas you exported , you have to create users in the postgresql with the schema name.
+
+then simply load by using psql -f outputfile.
+
+once schema created we can migrate data very easily by using -d -t COPY command.
+
+===================================================================================
+vi ora2pg.conf
+ORACLE_DSN dbi:Oracle:host=serveroracle.localdomain;sid=ORCL
+ORACLE_USER system
+ORACLE_PWD root
+SCHEMA HR,schema2,schema3 (if you want to export all schemas at a time , comment this option, this option only for specific schemas)
+TYPE TABLE PACKAGE COPY VIEW GRANT SEQUENCE TRIGGER FUNCTION PROCEDURE TABLESPACE TYPE PARTITION  (to mention types of objects need to export)
+
+OUTPUT HR_output.sql
+
+want to export all schemas we can just comment the option SCHEMA. In this case all non-oracle users will be extracted.
+
+SYSUSERS OE,HR
+
+[root@serveroracle ora2pg]# ora2pg
+
+
+[postgres@serveroracle ~]$ psql
+psql (9.6.2 dbi services build)
+Type "help" for help.
+postgres=# \c orclpg
+You are now connected to database "orclpg" as user "postgres".
+orclpg=# create user HR WITH PASSWORD 'root';
+
+orclpg=# \i HR_output.sql
+
+ERROR: insert or update on table "countries" violates foreign key constraint "countr_reg_fk"
+DETAIL: Key (region_id)=(2) is not present in table "regions".
+STATEMENT: COPY countries (country_id,country_name,region_id) FROM STDIN;
+psql:HR_output.sql:224: ERROR: insert or update on table "countries" violates foreign key constraint "countr_reg_fk"
+DETAIL: Key (region_id)=(2) is not present in table "regions".
+orclpg=#
+
+
+To correct this, we put the option in the configuration file DROP_FKEY to 1
+
+DROP_FKEY 1
+
+
+partitioned tables:
+
+
+ALLOW           EMPLOYEES SALE_.* COUNTRIES .*_GEOM_SEQ
+
+ora2pg -p -c ora2pg.conf -t TRIGGER -a 'TABLE[employees]'
+
+ora2pg -p -c ora2pg.conf -t PARTITION -e 'PARTITION[PART_199.* PART_198.*]'
+
+EXCLUDE         EMPLOYEES TMP_.* COUNTRIES
+
+
+  1* select DISTINCT 'grant '||PRIVILEGE|| ' to RAM;' from DBA_SYS_PRIVS
+
+
+
+[oracle@node1 ~]$ lsnrctl start LISTENER_TESTDB
+[oracle@node1 ~]$ export LD_LIBRARY_PATH=/u01/app/oracle/product/12.2.0.1/lib
+
+
+
+[oracle@node1 ora2pg]$ 
+[2020-04-21 02:40:49] Ora2Pg version: 20.0
+[2020-04-21 02:40:49] Trying to connect to database: dbi:Oracle:host=192.168.38.132;sid=oradb;port=1521
+[2020-04-21 02:40:49] Isolation level: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+[2020-04-21 02:40:49] DEBUG: executing initial command to Oracle: commit
+[2020-04-21 02:40:49] Looking forward functions declaration in schema RAM.
+[2020-04-21 02:40:49] Retrieving table information...
+[2020-04-21 02:43:08] [1] Scanning table DEPT (0 rows)...
+[2020-04-21 02:43:08] [2] Scanning table EMP (7 rows)...
+[2020-04-21 02:43:08] [3] Scanning table EMP_BLB (1 rows)...
+[2020-04-21 02:43:08] [4] Scanning table IMAGE (1 rows)...
+[2020-04-21 02:43:08] [5] Scanning table INVOICES (1 rows)...
+[2020-04-21 02:43:11] Retrieving table information...
+[2020-04-21 02:45:24] [1] Scanning table DEPT (0 rows)...
+[2020-04-21 02:45:24] Warning duplicate table DEPT, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:45:24] [1] Scanning table EMP (7 rows)...
+[2020-04-21 02:45:24] Warning duplicate table EMP, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:45:24] [1] Scanning table EMP_BLB (1 rows)...
+[2020-04-21 02:45:24] Warning duplicate table EMP_BLB, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:45:24] [1] Scanning table IMAGE (1 rows)...
+[2020-04-21 02:45:24] Warning duplicate table IMAGE, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:45:24] [1] Scanning table INVOICES (1 rows)...
+[2020-04-21 02:45:24] Warning duplicate table INVOICES, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:45:25] Retrieving table information...
+[2020-04-21 02:47:29] [1] Scanning table DEPT (0 rows)...
+[2020-04-21 02:47:29] Warning duplicate table DEPT, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:47:29] [1] Scanning table EMP (7 rows)...
+[2020-04-21 02:47:29] Warning duplicate table EMP, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:47:29] [1] Scanning table EMP_BLB (1 rows)...
+[2020-04-21 02:47:29] Warning duplicate table EMP_BLB, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:47:29] [1] Scanning table IMAGE (1 rows)...
+[2020-04-21 02:47:29] Warning duplicate table IMAGE, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:47:29] [1] Scanning table INVOICES (1 rows)...
+[2020-04-21 02:47:29] Warning duplicate table INVOICES, maybe a SYNONYM ? Skipped.
+[2020-04-21 02:47:29] Retrieving views information...
+[2020-04-21 02:47:30] Retrieving users/roles/grants information...
+[2020-04-21 02:48:44] Retrieving tablespaces information...
+[2020-04-21 02:49:08] Retrieving user defined types information...
+[2020-04-21 02:49:08] Retrieving partitions information...
+[2020-04-21 02:50:52] Dumping table DEPT...
+[2020-04-21 02:50:52] Dumping table EMP...
+[2020-04-21 02:50:52] Dumping table EMP_BLB...
+[2020-04-21 02:50:52] Dumping table IMAGE...
+[2020-04-21 02:50:52] Dumping table INVOICES...
+[2020-04-21 02:50:52] Trying to connect to database: dbi:Oracle:host=192.168.38.132;sid=oradb;port=1521
+[2020-04-21 02:50:52] Isolation level: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+[2020-04-21 02:50:52] DEBUG: executing initial command to Oracle: commit
+[2020-04-21 02:50:52] Retrieving partitions information...
+[2020-04-21 02:52:29] Dropping foreign keys of table DEPT...
+[2020-04-21 02:52:29] Dropping foreign keys of table EMP...
+[2020-04-21 02:52:29] Dropping foreign keys of table EMP_BLB...
+[2020-04-21 02:52:29] Dropping foreign keys of table IMAGE...
+[2020-04-21 02:52:29] Dropping foreign keys of table INVOICES...
+[2020-04-21 02:52:29] Looking how to retrieve data from DEPT...
+[2020-04-21 02:52:29] DEGUG: Query sent to Oracle: SELECT "NO" FROM "RAM"."DEPT" a
+[2020-04-21 02:52:29] Fetching all data from DEPT tuples...
+[2020-04-21 02:52:29] DEBUG: number of rows 0 extracted from table DEPT
+[2020-04-21 02:52:29] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:29] Dumping data from DEPT to file: output.sql
+[2020-04-21 02:52:29] Extracted records from table DEPT: total_records = 0 (avg: 0 recs/sec)
+
+[>                        ]  0/10 total rows (0.0%) - (0 sec., avg: 0 recs/sec).
+[2020-04-21 02:52:29] Looking how to retrieve data from EMP...
+[2020-04-21 02:52:29] DEGUG: Query sent to Oracle: SELECT "NO" FROM "RAM"."EMP" a
+[2020-04-21 02:52:29] Fetching all data from EMP tuples...
+[2020-04-21 02:52:29] DEBUG: number of rows 7 extracted from table EMP
+[2020-04-21 02:52:29] DEBUG: Formatting bulk of 10000 data (real: 7 rows) for PostgreSQL.
+[2020-04-21 02:52:29] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:29] Dumping data from EMP to file: output.sql
+[2020-04-21 02:52:29] Extracted records from table EMP: total_records = 7 (avg: 7 recs/sec)
+
+[================>        ]  7/10 total rows (70.0%) - (0 sec., avg: 7 recs/sec).
+[2020-04-21 02:52:29] Looking how to retrieve data from EMP_BLB...
+[2020-04-21 02:52:29] WARNING: can not extract data from EMP_BLB, no column found...
+[2020-04-21 02:52:29] Looking how to retrieve data from IMAGE...
+[2020-04-21 02:52:29] DEGUG: Query sent to Oracle: SELECT "ID","SUBJECT" FROM "RAM"."IMAGE" a
+[2020-04-21 02:52:29] Fetching all data from IMAGE tuples...
+[2020-04-21 02:52:29] DEBUG: number of rows 3 extracted from table IMAGE
+[2020-04-21 02:52:29] DEBUG: Formatting bulk of 10000 data (real: 3 rows) for PostgreSQL.
+[2020-04-21 02:52:29] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:29] Dumping data from IMAGE to file: output.sql
+[2020-04-21 02:52:29] Extracted records from table IMAGE: total_records = 3 (avg: 3 recs/sec)
+
+[========================>] 10/10 total rows (100.0%) - (0 sec., avg: 10 recs/sec).
+[2020-04-21 02:52:30] Dumping partition table INVOICES (INVOICES_Q1)...
+[2020-04-21 02:52:30] Looking how to retrieve data from INVOICES partition INVOICES_Q1...
+[2020-04-21 02:52:30] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q1) a
+[2020-04-21 02:52:30] Fetching all data from INVOICES_Q1 tuples...
+[2020-04-21 02:52:30] DEBUG: number of rows 2 extracted from table INVOICES
+[2020-04-21 02:52:30] DEBUG: Formatting bulk of 10000 data (real: 2 rows) for PostgreSQL.
+[2020-04-21 02:52:30] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:30] Dumping data from INVOICES_Q1 to file: output.sql
+[2020-04-21 02:52:30] Extracted records from table INVOICES_Q1: total_records = 2 (avg: 2 recs/sec)
+
+[========================>] 12/10 total rows (120.0%) - (1 sec., avg: 12 recs/sec).
+[2020-04-21 02:52:30] Dumping partition table INVOICES (INVOICES_Q2)...
+[2020-04-21 02:52:30] Looking how to retrieve data from INVOICES partition INVOICES_Q2...
+[2020-04-21 02:52:30] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q2) a
+[2020-04-21 02:52:30] Fetching all data from INVOICES_Q2 tuples...
+[2020-04-21 02:52:30] DEBUG: number of rows 2 extracted from table INVOICES
+[2020-04-21 02:52:30] DEBUG: Formatting bulk of 10000 data (real: 2 rows) for PostgreSQL.
+[2020-04-21 02:52:30] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:30] Dumping data from INVOICES_Q2 to file: output.sql
+[2020-04-21 02:52:30] Extracted records from table INVOICES_Q2: total_records = 2 (avg: 2 recs/sec)
+
+[========================>] 14/10 total rows (140.0%) - (1 sec., avg: 14 recs/sec).
+[2020-04-21 02:52:30] Dumping partition table INVOICES (INVOICES_Q3)...
+[2020-04-21 02:52:30] Looking how to retrieve data from INVOICES partition INVOICES_Q3...
+[2020-04-21 02:52:30] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q3) a
+[2020-04-21 02:52:30] Fetching all data from INVOICES_Q3 tuples...
+[2020-04-21 02:52:30] DEBUG: number of rows 1 extracted from table INVOICES
+[2020-04-21 02:52:30] DEBUG: Formatting bulk of 10000 data (real: 1 rows) for PostgreSQL.
+[2020-04-21 02:52:30] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:30] Dumping data from INVOICES_Q3 to file: output.sql
+[2020-04-21 02:52:30] Extracted records from table INVOICES_Q3: total_records = 1 (avg: 1 recs/sec)
+
+[========================>] 15/10 total rows (150.0%) - (1 sec., avg: 15 recs/sec).
+[2020-04-21 02:52:30] Dumping partition table INVOICES (INVOICES_Q4)...
+[2020-04-21 02:52:30] Looking how to retrieve data from INVOICES partition INVOICES_Q4...
+[2020-04-21 02:52:30] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q4) a
+[2020-04-21 02:52:30] Fetching all data from INVOICES_Q4 tuples...
+[2020-04-21 02:52:30] DEBUG: number of rows 1 extracted from table INVOICES
+[2020-04-21 02:52:30] DEBUG: Formatting bulk of 10000 data (real: 1 rows) for PostgreSQL.
+[2020-04-21 02:52:30] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:52:30] Dumping data from INVOICES_Q4 to file: output.sql
+[2020-04-21 02:52:30] Extracted records from table INVOICES_Q4: total_records = 1 (avg: 1 recs/sec)
+
+[========================>] 16/10 total rows (160.0%) - (1 sec., avg: 16 recs/sec).
+[2020-04-21 02:52:30] Restoring foreign keys of table DEPT...
+[2020-04-21 02:52:30] Restoring foreign keys of table EMP...
+[2020-04-21 02:52:30] Restoring foreign keys of table EMP_BLB...
+[2020-04-21 02:52:30] Restoring foreign keys of table IMAGE...
+[2020-04-21 02:52:30] Restoring foreign keys of table INVOICES...
+[2020-04-21 02:52:30] Total time to export data from 5 tables (4 partitions, 0 sub-partitions) and 10 total rows: 98 wallclock secs ( 0.05 usr +  0.01 sys =  0.06 CPU)
+[2020-04-21 02:52:30] Speed average: 0.10 rows/sec
+[2020-04-21 02:52:30] Trying to connect to database: dbi:Oracle:host=192.168.38.132;sid=oradb;port=1521
+[2020-04-21 02:52:30] Isolation level: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+[2020-04-21 02:52:30] DEBUG: executing initial command to Oracle: commit
+Issuing rollback() due to DESTROY without explicit disconnect() of DBD::Oracle::db handle (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=192.168.38.132)(PORT=1521))(CONNECT_DATA=(SID=oradb))) at /opt/ActivePerl-5.26/site/lib/Ora2Pg.pm line 7135.
+[2020-04-21 02:52:30] Retrieving partitions information...
+[2020-04-21 02:54:07] Dropping foreign keys of table DEPT...
+[2020-04-21 02:54:07] Dropping foreign keys of table EMP...
+[2020-04-21 02:54:07] Dropping foreign keys of table EMP_BLB...
+[2020-04-21 02:54:07] Dropping foreign keys of table IMAGE...
+[2020-04-21 02:54:07] Dropping foreign keys of table INVOICES...
+[2020-04-21 02:54:08] Looking how to retrieve data from DEPT...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "NO" FROM "RAM"."DEPT" a
+[2020-04-21 02:54:08] Fetching all data from DEPT tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 0 extracted from table DEPT
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from DEPT to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table DEPT: total_records = 0 (avg: 0 recs/sec)
+
+[========================>] 16/10 total rows (160.0%) - (1 sec., avg: 16 recs/sec).
+[2020-04-21 02:54:08] Looking how to retrieve data from EMP...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "NO" FROM "RAM"."EMP" a
+[2020-04-21 02:54:08] Fetching all data from EMP tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 7 extracted from table EMP
+[2020-04-21 02:54:08] DEBUG: Formatting bulk of 10000 data (real: 7 rows) for PostgreSQL.
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from EMP to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table EMP: total_records = 7 (avg: 7 recs/sec)
+
+[========================>] 23/10 total rows (230.0%) - (1 sec., avg: 23 recs/sec).
+[2020-04-21 02:54:08] Looking how to retrieve data from EMP_BLB...
+[2020-04-21 02:54:08] WARNING: can not extract data from EMP_BLB, no column found...
+[2020-04-21 02:54:08] Looking how to retrieve data from IMAGE...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "ID","SUBJECT" FROM "RAM"."IMAGE" a
+[2020-04-21 02:54:08] Fetching all data from IMAGE tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 3 extracted from table IMAGE
+[2020-04-21 02:54:08] DEBUG: Formatting bulk of 10000 data (real: 3 rows) for PostgreSQL.
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from IMAGE to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table IMAGE: total_records = 3 (avg: 3 recs/sec)
+
+[========================>] 26/10 total rows (260.0%) - (1 sec., avg: 26 recs/sec).
+[2020-04-21 02:54:08] Dumping partition table INVOICES (INVOICES_Q1)...
+[2020-04-21 02:54:08] Looking how to retrieve data from INVOICES partition INVOICES_Q1...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q1) a
+[2020-04-21 02:54:08] Fetching all data from INVOICES_Q1 tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 2 extracted from table INVOICES
+[2020-04-21 02:54:08] DEBUG: Formatting bulk of 10000 data (real: 2 rows) for PostgreSQL.
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from INVOICES_Q1 to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table INVOICES_Q1: total_records = 2 (avg: 2 recs/sec)
+
+[========================>] 28/10 total rows (280.0%) - (1 sec., avg: 28 recs/sec).
+[2020-04-21 02:54:08] Dumping partition table INVOICES (INVOICES_Q2)...
+[2020-04-21 02:54:08] Looking how to retrieve data from INVOICES partition INVOICES_Q2...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q2) a
+[2020-04-21 02:54:08] Fetching all data from INVOICES_Q2 tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 2 extracted from table INVOICES
+[2020-04-21 02:54:08] DEBUG: Formatting bulk of 10000 data (real: 2 rows) for PostgreSQL.
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from INVOICES_Q2 to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table INVOICES_Q2: total_records = 2 (avg: 2 recs/sec)
+
+[========================>] 30/10 total rows (300.0%) - (1 sec., avg: 30 recs/sec).
+[2020-04-21 02:54:08] Dumping partition table INVOICES (INVOICES_Q3)...
+[2020-04-21 02:54:08] Looking how to retrieve data from INVOICES partition INVOICES_Q3...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q3) a
+[2020-04-21 02:54:08] Fetching all data from INVOICES_Q3 tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 1 extracted from table INVOICES
+[2020-04-21 02:54:08] DEBUG: Formatting bulk of 10000 data (real: 1 rows) for PostgreSQL.
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from INVOICES_Q3 to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table INVOICES_Q3: total_records = 1 (avg: 1 recs/sec)
+
+[========================>] 31/10 total rows (310.0%) - (1 sec., avg: 31 recs/sec).
+[2020-04-21 02:54:08] Dumping partition table INVOICES (INVOICES_Q4)...
+[2020-04-21 02:54:08] Looking how to retrieve data from INVOICES partition INVOICES_Q4...
+[2020-04-21 02:54:08] DEGUG: Query sent to Oracle: SELECT "INVOICE_NO","INVOICE_DATE","COMMENTS" FROM "RAM"."INVOICES" PARTITION(invoices_q4) a
+[2020-04-21 02:54:08] Fetching all data from INVOICES_Q4 tuples...
+[2020-04-21 02:54:08] DEBUG: number of rows 1 extracted from table INVOICES
+[2020-04-21 02:54:08] DEBUG: Formatting bulk of 10000 data (real: 1 rows) for PostgreSQL.
+[2020-04-21 02:54:08] DEBUG: Creating output for 10000 tuples
+[2020-04-21 02:54:08] Dumping data from INVOICES_Q4 to file: output.sql
+[2020-04-21 02:54:08] Extracted records from table INVOICES_Q4: total_records = 1 (avg: 1 recs/sec)
+
+[========================>] 32/10 total rows (320.0%) - (1 sec., avg: 32 recs/sec).
+[2020-04-21 02:54:08] Restoring foreign keys of table DEPT...
+[2020-04-21 02:54:08] Restoring foreign keys of table EMP...
+[2020-04-21 02:54:08] Restoring foreign keys of table EMP_BLB...
+[2020-04-21 02:54:08] Restoring foreign keys of table IMAGE...
+[2020-04-21 02:54:08] Restoring foreign keys of table INVOICES...
+[2020-04-21 02:54:08] Total time to export data from 5 tables (4 partitions, 0 sub-partitions) and 10 total rows: 98 wallclock secs ( 0.04 usr +  0.01 sys =  0.05 CPU)
+[2020-04-21 02:54:08] Speed average: 0.10 rows/sec
+[2020-04-21 02:54:08] Add views definition...
+[2020-04-21 02:54:08] Add users/roles/grants privileges...
+[2020-04-21 02:54:08] Add tablespaces definition...
+[2020-04-21 02:54:08] Add custom types definition...
+[2020-04-21 02:54:08] Add partitions definition...
+[oracle@node1 ora2pg]$ ls -ltr
+
+----------------------------------------
+
+----------------------------------------
+Go to output folder:
+
+check the files.
+
+later switch to postgresql user and create the schema in postgresql.
+
+create user ram;
+
+create table space file--> update file with location.
+
+create table file  -->
+
+partition table file -->
+
+insert file -->
+
+psql -f filename
+
+view creation file -->
+
+we are having issue with blob/lobs--in postgresql alternative data type bytea.
+
+except blob column data will be export for reamining columns, so for the only blob colum seperately you export data from oracle,
+and insert into postgresql using command.
+
+simply they are skiiping tables with blobs. then later they exporting in oracle, then they are restoring into postgresql.
+
+most of the people while creating stored procedures due to some oracle key words its failing, so we have to adjust the key words,
+
+with help of google or developer.
+
+===========================================
+
+after adding below details run the export again.
+
+PG_DSN          dbi:Pg:dbname=postgres;host=192.168.38.133;port=5432
+PG_USER postgres
+PG_PWD  ram
+
+-bash-4.2$ ./export_schema.sh
+
+then create username same as oracle schema name in postgresql.
+
+to export data:
+
+ora2pg -t COPY -o data.sql -b ./data -c ./config/ora2pg.conf
+
+chmod 777 /var/lib/oracle/migration/test_project/
+
+su - postgres
+start postgresql services
+
+cd /var/lib/oracle/migration/test_project/
+
+[oracle@node2 test_project]$ ./import_all.sh -d postgres -o postgres
+
+create owner :N
+drop and creaate database :N
+===========================================================
+with oracle/postgres user need to run?
+delta changes ..how much gap / fully taking?
+
+access to total videos folder.
+interview questions
+sample resume
+
+
+
+
+	
+
+ 
+
+
+
+
+
+
+
+
+

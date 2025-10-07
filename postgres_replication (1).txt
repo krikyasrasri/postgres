@@ -1,0 +1,82 @@
+
+Postgres replication setup:
+
+
+Primary server configuration:
+
+step1: edit postgresql.conf
+
+         wal_level = hot_standby
+         max_wal_senders = 1
+         wal_keep_segments = 50
+		 archive_mode = on
+		 archive_command = 'cp %p /archive_log/archive/%f'
+
+step2: edit pg_hba.conf
+
+        host     replication     postgres       192.168.1.131/32     trust  ----DR server IP address
+		
+step3:restart postgres service
+
+       service postgresql-9.2 restart
+
+step4:Next thing we need to do is take data snapshot of data from master and then move that to slave server.
+
+        psql -c "SELECT pg_start_backup('replbackup');"
+        tar cfP /tmp/db_file_backup.tar /var/lib/pgsql/9.2/data
+        psql -c "SELECT pg_stop_backup();"   
+		
+		
+step5:Now move this data to slave database server.
+
+scp /tmp/db_file_backup.tar root@opensourcedbms_pg_slave:/tmp/
+
+
+Standby server configuration:
+
+
+step1:First stop server if it is running
+
+
+          service postgresql-9.2 stop
+		  
+step2:Move the existing data directory to a new folder
+
+          mv /var/lib/pgsql/9.2/data/ /var/lib/pgsql/9.2/data.old
+
+step3:Unzip master server data snapshot file that is copied into this server.
+
+          tar xvfP /tmp/db_file_backup.tar
+
+step4:Remove postmaster.pid so standby server does not see the primary server’s pid as its own.
+
+          rm -f /var/lib/pgsql/9.2/data/postmaster.pid
+
+step5:Now edit configuration file and tweak hot_standby variable.
+
+           vi /var/lib/pgsql/9.2/data/postgresql.conf
+		   
+		   hot_standby = on
+		   
+step6:cp /usr/pgsql-9.2/share/recovery.conf.sample /var/lib/pgsql/9.2/data/recovery.conf
+
+
+step7:Edit this recovery.conf file and update standby server settings:
+
+        vi /var/lib/pgsql/9.2/data/recovery.conf
+
+         standby_mode = on
+         primary_conninfo = 'host=opensourcedbms_pg_master port=5432 user=postgres password=postgres'   ------Give the primary database IP address	
+step8:Update permissions on recovery.conf file
+
+
+        chown postgres.postgres /var/lib/pgsql/9.2/data/recovery.conf
+
+        service postgresql-9.2 start
+
+
+		
+
+ 
+ 
+ 

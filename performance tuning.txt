@@ -1,0 +1,465 @@
+performance tuning
+------------------
+if end user sends complaint by stating query taking huge time/system not responding properly/to increase the performance ..
+
+if once user sent complaint against one query taking huge time,
+
+1.check the number of processes at os level ,all process count(ps -ef|wc -l) and postgres user process count(ps -ef|grep postgres|wc -l).
+
+
+2.check the cpu usage (minimum 40% idle, means avaible for usage) --identify top cpu consumers and send mail to respective team.
+
+if processes related to root/os -->need to send mail SA(os team)
+
+if processes related to database/postgres -->send mail to developers/
+application team.
+
+3.check the load average: 90% of cases by clearing idle sessions at db level will clears.
+
+4.check the memory consumption : monitor using free -m command for smaller system for effective results, for biggers systems free -g.
+ send mail to respective team.
+
+5.login to database and check db connection count  : select count(*) from pg_stat_activity;
+
+
+postgres=# select usename,state,count(*) from pg_stat_activity group by usename,state;
+ usename  | state  | count
+----------+--------+-------
+          |        |     4
+ postgres |        |     1
+ postgres | active |     1
+
+
+6.check that specific query waiting state is true or false. : 
+
+select * from pg_stat_Activitiy where wait_event<>'NULL';
+
+7.check is there any locks : Identify blocking queries.
+
+8.if everything is fine check whether statics updated or not.
+
+select last_vacuum,last_analyze from pg_stat_user_tables where tablename='';
+
+if the stats are stale, stale means collected older than 7 days.
+
+9.check whether any query generating huge temp files or not.
+
+postgres=# select datname,numbackends,temp_files,temp_bytes,deadlocks from pg_stat_database;
+  datname   | numbackends | temp_files | temp_bytes | deadlocks
+------------+-------------+------------+------------+-----------
+            |           0 |          0 |          0 |         0
+ postgres   |           1 |          0 |          0 |         0
+ ram        |           0 |          0 |          0 |         0
+ template1  |           0 |          0 |          0 |         0
+ template0  |           0 |          0 |          0 |         0
+ syncttest  |           0 |          0 |          0 |         0
+ rajaram    |           0 |          0 |          0 |         0
+ asynctest  |           0 |          0 |          0 |         0
+ rajaes     |           0 |          0 |          0 |         0
+ source_rep |           0 |          0 |          0 |         0
+
+
+10.if everything is fine check the query design, it should follow below given minum requirements.
+
+->whether this query executing first time or not.
+
+postgresql database desigining standadrs.
+-----------------------------------------
+a.there should be no join condition between non indexed columns. always join condition b/w indexed columns.
+
+b.no join condition between very big table and small table, that may leads to product join
+
+c.there should be alias names properly, otherwise it will leads to product join
+
+INNER JOIN: only common records.
+
+
+postgres=# create table emp(no int,name varchar);
+CREATE TABLE
+postgres=# insert into emp values(1,'ram'),(2,'sam');
+INSERT 0 2
+postgres=#
+postgres=#
+postgres=# create table dept(no int,dname varchar);
+CREATE TABLE
+postgres=# insert into dept values(1,'hr');
+INSERT 0 1
+postgres=# insert into dept values(2,'fin');
+INSERT 0 1
+postgres=# insert into dept values(3,'it');
+INSERT 0 1
+postgres=# \dt
+        List of relations
+ Schema | Name | Type  |  Owner
+--------+------+-------+----------
+ public | dept | table | postgres
+ public | emp  | table | postgres
+(2 rows)
+
+postgres=# select e.no,e.name,d.dname from emp e inner join dept d on e.no=d.no;
+ no | name | dname
+----+------+-------
+  1 | ram  | hr
+  2 | sam  | fin
+  2 | sam  | it
+(3 rows)
+
+tests=# explain select e.no,e.name,d.dname from emp e inner join dept d on e.no=d.no;
+                              QUERY PLAN
+-----------------------------------------------------------------------
+ Merge Join  (cost=176.34..303.67 rows=8064 width=68)
+   Merge Cond: (e.no = d.no)
+   ->  Sort  (cost=88.17..91.35 rows=1270 width=36)
+         Sort Key: e.no
+         ->  Seq Scan on emp e  (cost=0.00..22.70 rows=1270 width=36)
+   ->  Sort  (cost=88.17..91.35 rows=1270 width=36)
+         Sort Key: d.no
+         ->  Seq Scan on dept d  (cost=0.00..22.70 rows=1270 width=36)
+(8 rows)
+
+
+to find the out final cost: 303.67-176.34=127.33===to convert cost to ms, default cost value is 0.01===127.33/0.01==12733 ms (for query execution)
+
+to make sure we have done good tuning, before and after cost value should be less..
+
+if that time reduced means we achived that.
+
+
+
+tests=# create index emp_idx on emp(no);
+CREATE INDEX
+postgres=# create index dept_idx on dept(no);	
+CREATE INDEX
+tests=# explain select e.no,e.name,d.dname from emp e inner join dept d on e.no=d.no;
+                            QUERY PLAN
+------------------------------------------------------------------
+ Hash Join  (cost=1.04..2.11 rows=2 width=68)
+   Hash Cond: (d.no = e.no)
+   ->  Seq Scan on dept d  (cost=0.00..1.03 rows=3 width=36)
+   ->  Hash  (cost=1.02..1.02 rows=2 width=36)
+         ->  Seq Scan on emp e  (cost=0.00..1.02 rows=2 width=36)
+(5 rows)
+
+
+always foucs on cost to see the perfromance improvement.
+
+tablesize : tablefile+index file (if u have index)
+
+left outer join:
+---------------
+all records from left side table, common records from right side table
+
+
+tests=# select * from emp e left outer join dept d  on e.no=d.no;
+ no | name | no | dname
+----+------+----+-------
+  1 | ram  |  1 | hr
+  2 | sam  |  2 | fin
+(2 rows)
+
+
+right outer join:
+-----------------
+all records from right side table, common records from left side table.
+
+
+tests=# select * from emp e right outer join dept d  on e.no=d.no;
+ no | name | no | dname
+----+------+----+-------
+  1 | ram  |  1 | hr
+  2 | sam  |  2 | fin
+    |      |  3 | it
+(3 rows)
+
+
+
+LEFT outer join is common records from right side table + all rows from the LEFT table 
+RIGHT OUTER join is common recors from left side table + all rows from the right-hand side table.
+
+
+Read more: https://javarevisited.blogspot.com/2013/05/difference-between-left-and-right-outer-join-sql-mysql.html#ixzz6cVEUVP00
+
+
+if you found any of the above three, give suggestions to application team to change the query accordingly.
+
+table a:10
+table b:5 records.
+
+at any cost records count should not more the 15. if product join happens it will displays 50 records.
+
+a U b  --->10+5=15
+a intersection----b --common record--5
+a left outer join b--->all records from a, common records from b---10+2
+a right outer join b--->aall records from b, common records from a---5+2
+
+10*5=50 (product join)
+
+
+select * from emp e.
+
+sss=# explain select e.no,e.ename,d.dname from emp e right outer join  dept d on e.no=d.no;
+                              QUERY PLAN
+----------------------------------------------------------------------
+ Hash Left Join  (cost=38.58..64.62 rows=1270 width=68)
+   Hash Cond: (d.no = e.no)
+   ->  Seq Scan on dept d  (cost=0.00..22.70 rows=1270 width=36)
+   ->  Hash  (cost=22.70..22.70 rows=1270 width=36)
+         ->  Seq Scan on emp e  (cost=0.00..22.70 rows=1270 width=36)
+(5 rows)
+
+seq scan means full table scan, if optimizer using index, it will display index scan there. most of the times if u r using where condition on top of any column, better u can create index on top of that column.
+in 11 onwards u can able to create index on mulitple columns.
+
+to forecfully use the index in the plan.
+
+#enable_indexscan = on
+#enable_indexonlyscan = on (to make forcefully choose index in explain plan)
+
+to make index only only scan forcefull we have to disable seq_scan and we have to enable index_only_scan.
+
+disable sequential scan:
+
+postgres=# show enable_seqscan;
+ enable_seqscan
+----------------
+ on
+(1 row)
+
+postgres=# alter system set enable_seqscan=off;
+ALTER SYSTEM
+postgres=# show enable_seqscan;
+ enable_seqscan
+----------------
+ on
+(1 row)
+
+postgres=# select pg_reload_conf();
+ pg_reload_conf
+----------------
+ t
+(1 row)
+
+postgres=#  show enable_seqscan;
+ enable_seqscan
+----------------
+ off
+(1 row)
+
+
+postgres=# explain select * from emp where no=1;
+                             QUERY PLAN
+--------------------------------------------------------------------
+ Index Scan using emp_idx on emp  (cost=0.13..8.14 rows=1 width=36)
+   Index Cond: (no = 1)
+(2 rows)
+
+------------------------
+index only scan example.
+cost calaculation formula.
+table column with default time stamp.
+
+4.at any point of time multiple nested joins not recomended, it will consume huge resources..
+
+select eno from emp where eno in(select no from dept where dno in(selel  )));
+
+in that case beeter create temp table and get the result set..
+
+5.if you found more aggreagate functions leads to performance issue.
+
+always try to reduce the usage of aggregar=te functions.
+
+sum,min,max,count---
+
+
+debug_print_parse : enable it ---run the function 
+
+
+this is the tuning part u can done from ur side, to deside parameter value, we have one link called 
+
+pgtune.com -- this is online website, you can go and mention you RAM,max_connections limit, and ur environment type, means(full load+ loading/reporting or reporting)
+
+https://pgtune.leopard.in.ua/#/
+
+
+# DB Version: 11
+# OS Type: linux
+# DB Type: mixed
+# Total Memory (RAM): 16 GB
+# CPUs num: 4
+# Connections num: 500
+# Data Storage: ssd
+
+max_connections = 500
+shared_buffers = 4GB
+effective_cache_size = 12GB
+maintenance_work_mem = 1GB
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
+work_mem = 2097kB
+min_wal_size = 1GB
+max_wal_size = 2GB
+max_worker_processes = 4
+max_parallel_workers_per_gather = 2
+max_parallel_workers = 4
+
+
+like oracle there is no concept of check last time whihc plan query pciked, postgresql completely operating system based
+
+architecture, so we need to tune postgresql.conf file parameters only, no need to bother about previous executions.
+
+
+-------------------------
+
+this is the free one, if you need you can take licnece.
+
+
+
+# DB Version: 12
+# OS Type: linux
+# DB Type: mixed
+# Total Memory (RAM): 16 GB
+# CPUs num: 4
+# Connections num: 1000
+# Data Storage: san
+
+max_connections = 1000
+shared_buffers = 4GB
+effective_cache_size = 12GB
+maintenance_work_mem = 1GB
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 300
+work_mem = 1048kB
+min_wal_size = 1GB
+max_wal_size = 4GB
+max_worker_processes = 4
+max_parallel_workers_per_gather = 2
+max_parallel_workers = 4
+max_parallel_maintenance_workers = 2
+
+
+for tablesizes tracking:
+------------------------
+create table
+take daily sizes output
+trim the file.
+
+ cat test.sql|tail -20 >>test_new.sql
+cat test_new.sql|head -20 >>test_new1.sql
+
+
+
+postgres=# create table db_sizes(tablename varchar,size varchar);
+CREATE TABLE
+
+postgres=# insert into db_sizes(SELECT nspname || '.' || relname AS "relation",pg_size_pretty(pg_relation_size(C.oid)) AS "size" FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) WHERE nspname NOT IN ('pg_catalog', 'information_schema') ORDER BY pg_relation_size(C.oid) DESC LIMIT 20);
+INSERT 0 20
+postgres=#
+postgres=# select * from db;
+           tablename           |    size
+-------------------------------+------------
+ pg_toast.pg_toast_2618        | 456 kB
+ pg_toast.pg_toast_2619        | 24 kB
+ pg_toast.pg_toast_2619_index  | 16 kB
+ public.emp_idx                | 16 kB
+ public.dept_idx               | 16 kB
+ pg_toast.pg_toast_2618_index  | 16 kB
+ pg_toast.pg_toast_2328_index  | 8192 bytes
+ public.emp                    | 8192 bytes
+ pg_toast.pg_toast_1417_index  | 8192 bytes
+ pg_toast.pg_toast_16390_index | 8192 bytes
+ public.dept                   | 8192 bytes
+ pg_toast.pg_toast_16407_index | 8192 bytes
+ public.dept2                  | 8192 bytes
+ pg_toast.pg_toast_3079_index  | 8192 bytes
+ pg_toast.pg_toast_2609_index  | 8192 bytes
+ public.dept1                  | 8192 bytes
+ pg_toast.pg_toast_2604_index  | 8192 bytes
+ pg_toast.pg_toast_2606_index  | 8192 bytes
+ pg_toast.pg_toast_3456_index  | 8192 bytes
+ pg_toast.pg_toast_2600_index  | 8192 bytes
+(20 rows)
+
+
+
+huge data loading server optimization:
+======================================
+
+1.default_statistics_target=100 (integer):
+
+Sets the default statistics target for table columns without a column-specific target set via ALTER TABLE SET STATISTICS. 
+Larger values increase the time needed to do ANALYZE, but might improve the quality of the planner's estimates. The default is 100.
+
+ALTER TABLE SET STATISTICS.
+
+if this value bigger, number of auto analyze operations will be reduced during data loading.
+
+
+2.constraint_exclusion (enum)
+
+Controls the query planner's use of table constraints to optimize queries. 
+
+--dropping the constrainints and after loading recreate.
+
+3.Disable Autocommit: disable auto commit and end of the loading u can do commit, but risk is there if server got crashed, everything will
+
+be rollback.
+
+
+When using multiple INSERTs, turn off autocommit and just do one commit at the end. 
+
+4.instead of insert using use COPY.
+
+Use COPY to load all the rows in one command, instead of using a series of INSERT commands.
+ The COPY command is optimized for loading large numbers of rows;
+
+5.Remove Indexes
+
+If you are loading a freshly created table, the fastest method is to create the table, bulk load the table's data using COPY, 
+then create any indexes needed for the table. 
+
+6.Remove Foreign Key Constraints
+
+Just as with indexes, a foreign key constraint can be checked "in bulk" more efficiently than row-by-row. 
+So it might be useful to drop foreign key constraints, load data, and re-create the constraints. 
+
+7.Increase maintenance_work_mem
+
+Temporarily increasing the maintenance_work_mem configuration variable when loading large amounts of data can lead to improved performance. 
+This will help to speed up CREATE INDEX commands and ALTER TABLE ADD FOREIGN KEY commands. 
+
+8.Increase checkpoint_segments
+
+Temporarily increasing the checkpoint_segments configuration variable can also make large data loads faster. 
+This is because loading a large amount of data into PostgreSQL will cause checkpoints to occur more often than the normal 
+checkpoint frequency (specified by the checkpoint_timeout configuration variable). Whenever a checkpoint occurs, all dirty pages must be flushed to disk. By increasing checkpoint_segments temporarily during bulk data loads, the number of checkpoints that are required can be reduced.
+
+default is 5 minutes.
+
+for huge loading we will make it as 15 minutes.
+
+
+9.Disable WAL Archival and Streaming Replication
+
+When loading large amounts of data into an installation that uses WAL archiving or streaming replication, 
+it might be faster to take a new base backup after the load has completed than to process a large amount of incremental WAL data. 
+To prevent incremental WAL logging while loading, disable archiving and streaming replication, 
+by setting wal_level to minimal, archive_mode to off, and max_wal_senders to zero. 
+
+10.Run ANALYZE Afterwards
+Whenever you have significantly altered the distribution of data within a table, running ANALYZE is strongly recommended. 
+
+11.Change Target Table to Un-logged Mode : never recomended
+
+12.Disable Triggers : dependet logic is critical means we should not disable.
+
+
+
+
+
+

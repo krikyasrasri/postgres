@@ -1,0 +1,327 @@
+Installation of Pg_repack(1.2.1)
+software is in 
+
+
+---> unzip unzip pg_repack-1.2.1.zip 
+---> make
+
+we get error as 
+
+make[1]: Entering directory `/root/pg_repack-1.2.1/bin'
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -I/opt/PostgresPlus/9.2AS/include -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pg_repack.o pg_repack.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -I/opt/PostgresPlus/9.2AS/include -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pgut/pgut.o pgut/pgut.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -I/opt/PostgresPlus/9.2AS/include -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pgut/pgut-fe.o pgut/pgut-fe.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv pg_repack.o pgut/pgut.o pgut/pgut-fe.o -L/opt/PostgresPlus/9.2AS/lib -lpq -L/opt/PostgresPlus/9.2AS/lib -L/opt/libxml2-2.7.8/inst/lib  -L/opt/libxslt-1.1.26/inst/lib -L/opt/libiconv-1.14/inst/lib -L/opt/openldap-2.4.31/inst/lib -L/opt/krb5-1.10.1/inst/lib -L/opt/openssl-1.0.1c/inst/lib -L/opt/libedit-20120311-3.0/inst/lib -L/opt/ncurses-5.9/inst/lib -L/opt/uuid-1.6.2/inst/lib -L/opt/libmemcached-1.0.7/inst/lib -Wl,--as-needed -Wl,-rpath,'/opt/PostgresPlus/9.2AS/lib',--enable-new-dtags  -lpgport -lmemcached -lssl -lcrypto -lgssapi_krb5 -lz -ledit -lcrypt -lm -o pg_repack
+/usr/bin/ld: cannot find -lmemcached
+
+----> we need to install the related packages of lmemcached 
+
+please find the packages in and install 
+
+yum install <package name> 
+
+
+---> After that we will get error as
+
+---->make[1]: Entering directory `/root/pg_repack-1.2.1/bin'
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -I/opt/PostgresPlus/9.2AS/include -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pg_repack.o pg_repack.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -I/opt/PostgresPlus/9.2AS/include -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pgut/pgut.o pgut/pgut.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -I/opt/PostgresPlus/9.2AS/include -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pgut/pgut-fe.o pgut/pgut-fe.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv pg_repack.o pgut/pgut.o pgut/pgut-fe.o -L/opt/PostgresPlus/9.2AS/lib -lpq -L/opt/PostgresPlus/9.2AS/lib -L/opt/libxml2-2.7.8/inst/lib  -L/opt/libxslt-1.1.26/inst/lib -L/opt/libiconv-1.14/inst/lib -L/opt/openldap-2.4.31/inst/lib -L/opt/krb5-1.10.1/inst/lib -L/opt/openssl-1.0.1c/inst/lib -L/opt/libedit-20120311-3.0/inst/lib -L/opt/ncurses-5.9/inst/lib -L/opt/uuid-1.6.2/inst/lib -L/opt/libmemcached-1.0.7/inst/lib -Wl,--as-needed -Wl,-rpath,'/opt/PostgresPlus/9.2AS/lib',--enable-new-dtags  -lpgport -lmemcached -lssl -lcrypto -lgssapi_krb5 -lz -ledit -lcrypt -lm -o pg_repack
+/usr/bin/ld: cannot find -ledit
+
+--->Need to install ledit packages.
+
+Please find the packages in and install
+
+yum install <package name>
+
+
+
+---> Again we get error as 
+
+make[1]: Entering directory `/root/pg_repack-1.2.1/bin'
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv pg_repack.o pgut/pgut.o pgut/pgut-fe.o -L/opt/PostgresPlus/9.2AS/lib -lpq -L/opt/PostgresPlus/9.2AS/lib -L/opt/libxml2-2.7.8/inst/lib  -L/opt/libxslt-1.1.26/inst/lib -L/opt/libiconv-1.14/inst/lib -L/opt/openldap-2.4.31/inst/lib -L/opt/krb5-1.10.1/inst/lib -L/opt/openssl-1.0.1c/inst/lib -L/opt/libedit-20120311-3.0/inst/lib -L/opt/ncurses-5.9/inst/lib -L/opt/uuid-1.6.2/inst/lib -L/opt/libmemcached-1.0.7/inst/lib -Wl,--as-needed -Wl,-rpath,'/opt/PostgresPlus/9.2AS/lib',--enable-new-dtags  -lpgport -lmemcached -lssl -lcrypto -lgssapi_krb5 -lz -ledit -lcrypt -lm -o pg_repack
+/lib64/libldap_r-2.4.so.2: undefined reference to `ber_sockbuf_io_udp'
+collect2: ld returned 1 exit status
+make[1]: *** [pg_repack] Error 1
+make[1]: Leaving directory `/root/pg_repack-1.2.1/bin'
+make: *** [all] Error 2
+
+
+for this we need to remove all open-ldap packages 
+
+yum remove open-ldap
+
+
+now install make file as 
+
+make
+
+make install
+
+Installation is in progress
+
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv pg_repack.o pgut/pgut.o pgut/pgut-fe.o -L/opt/PostgresPlus/9.2AS/lib -lpq -L/opt/PostgresPlus/9.2AS/lib -L/opt/libxml2-2.7.8/inst/lib  -L/opt/libxslt-1.1.26/inst/lib -L/opt/libiconv-1.14/inst/lib -L/opt/openldap-2.4.31/inst/lib -L/opt/krb5-1.10.1/inst/lib -L/opt/openssl-1.0.1c/inst/lib -L/opt/libedit-20120311-3.0/inst/lib -L/opt/ncurses-5.9/inst/lib -L/opt/uuid-1.6.2/inst/lib -L/opt/libmemcached-1.0.7/inst/lib -Wl,--as-needed -Wl,-rpath,'/opt/PostgresPlus/9.2AS/lib',--enable-new-dtags  -lpgport -lmemcached -lssl -lcrypto -lgssapi_krb5 -lz -ledit -lcrypt -lm -o pg_repack
+make[1]: Leaving directory `/root/pg_repack-1.2.1/bin'
+make[1]: Entering directory `/root/pg_repack-1.2.1/lib'
+sed 's,REPACK_VERSION,1.2.1,g' pg_repack.sql.in > pg_repack--1.2.1.sql;
+sed 's,REPACK_VERSION,1.2.1,g' pg_repack.control.in > pg_repack.control
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -fpic -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o repack.o repack.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -fpic -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pgut/pgut-be.o pgut/pgut-be.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -fpic -DREPACK_VERSION=1.2.1 -I. -I. -I/opt/PostgresPlus/9.2AS/include/server -I/opt/PostgresPlus/9.2AS/include/internal -D_GNU_SOURCE -I/opt/libxml2-2.7.8/inst/include/libxml2  -I/opt/libxslt-1.1.26/inst/include -I/opt/libiconv-1.14/inst/include -I/opt/openldap-2.4.31/inst/include -I/opt/krb5-1.10.1/inst/include -I/opt/libxml2-2.7.8/inst/include/libxml2 -I/opt/openssl-1.0.1c/inst/include -I/opt/libedit-20120311-3.0/inst/include -I/opt/ncurses-5.9/inst/include -I/opt/uuid-1.6.2/inst/include -I/opt/libmemcached-1.0.7/inst/include  -c -o pgut/pgut-spi.o pgut/pgut-spi.c
+/usr/bin/gcc -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -fpic -shared -o pg_repack.so repack.o pgut/pgut-be.o pgut/pgut-spi.o -L/opt/PostgresPlus/9.2AS/lib -L/opt/libxml2-2.7.8/inst/lib  -L/opt/libxslt-1.1.26/inst/lib -L/opt/libiconv-1.14/inst/lib -L/opt/openldap-2.4.31/inst/lib -L/opt/krb5-1.10.1/inst/lib -L/opt/openssl-1.0.1c/inst/lib -L/opt/libedit-20120311-3.0/inst/lib -L/opt/ncurses-5.9/inst/lib -L/opt/uuid-1.6.2/inst/lib -L/opt/libmemcached-1.0.7/inst/lib -Wl,--as-needed -Wl,-rpath,'/opt/PostgresPlus/9.2AS/lib',--enable-new-dtags  
+make[1]: Leaving directory `/root/pg_repack-1.2.1/lib'
+make[1]: Entering directory `/root/pg_repack-1.2.1/regress'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/root/pg_repack-1.2.1/regress'
+You have new mail in /var/spool/mail/root
+[root@TSM-TEST-DB01 pg_repack-1.2.1]# 
+[root@TSM-TEST-DB01 pg_repack-1.2.1]# make install
+make[1]: Entering directory `/root/pg_repack-1.2.1/bin'
+/bin/mkdir -p '/opt/PostgresPlus/9.2AS/bin'
+/bin/sh /opt/PostgresPlus/9.2AS/lib/pgxs/src/makefiles/../../config/install-sh -c  pg_repack '/opt/PostgresPlus/9.2AS/bin'
+make[1]: Leaving directory `/root/pg_repack-1.2.1/bin'
+make[1]: Entering directory `/root/pg_repack-1.2.1/lib'
+/bin/mkdir -p '/opt/PostgresPlus/9.2AS/lib'
+/bin/mkdir -p '/opt/PostgresPlus/9.2AS/share/extension'
+/bin/sh /opt/PostgresPlus/9.2AS/lib/pgxs/src/makefiles/../../config/install-sh -c -m 755  pg_repack.so '/opt/PostgresPlus/9.2AS/lib/pg_repack.so'
+/bin/sh /opt/PostgresPlus/9.2AS/lib/pgxs/src/makefiles/../../config/install-sh -c -m 644 ./pg_repack.control '/opt/PostgresPlus/9.2AS/share/extension/'
+/bin/sh /opt/PostgresPlus/9.2AS/lib/pgxs/src/makefiles/../../config/install-sh -c -m 644  pg_repack--1.2.1.sql pg_repack.control '/opt/PostgresPlus/9.2AS/share/extension/'
+make[1]: Leaving directory `/root/pg_repack-1.2.1/lib'
+make[1]: Entering directory `/root/pg_repack-1.2.1/regress'
+make[1]: Nothing to be done for `install'.
+make[1]: Leaving directory `/root/pg_repack-1.2.1/regress'
+
+
+after installation we need to check pg_repack.control and pg_repack.sql file in /opt/PostgreSplus/9.2AS/share/extension/pg_repack.control
+
+If found, Installation completed.
+
+Now we need to load pg_repack in database as
+
+below command should be invoked from root
+
+psql -c 'create extension pg_repack' -d postgres
+
+CREATE EXTENSION
+
+
+
+output tested in test server: 
+
+SU - POSTGRES
+
+pg_repack -d Sambhalpur
+
+postgres=# \l
+                                   List of databases
+    Name     |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges   
+-------------+----------+----------+-------------+-------------+-----------------------
+ Boudh       | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ Sambhalpur  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ postgres    | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ suvkias_sam | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ template0   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+             |          |          |             |             | postgres=CTc/postgres
+ template1   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+             |          |          |             |             | postgres=CTc/postgres
+ test        | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+(7 rows)
+
+postgres=# \q
+could not save history to file "/opt/PostgresPlus/9.2AS/.psql_history": Permission denied
+-bash-4.1$ pg_repack -d Sambhalpur
+Password: 
+Password: 
+INFO: repacking table "plsql_profiler_runs"
+INFO: repacking table ""edb$snap""
+INFO: repacking table ""edb$system_waits""
+INFO: repacking table ""edb$session_waits""
+INFO: repacking table ""edb$session_wait_history""
+INFO: repacking table ""edb$stat_all_indexes""
+INFO: repacking table ""edb$stat_all_tables""
+INFO: repacking table ""edb$stat_database""
+INFO: repacking table ""edb$statio_all_indexes""
+INFO: repacking table ""edb$statio_all_tables""
+INFO: repacking table "atm_db.request_message_log"INFO: repacking table "atm_db.response_message_log"
+INFO: repacking table "fundtransfer.databasechangelog"
+INFO: repacking table "fundtransfer.databasechangeloglock"
+INFO: repacking table "fundtransfer.ifscdetails"
+INFO: repacking table "fundtransfer.inwardentryheader"
+INFO: repacking table "fundtransfer.inwardentrytxns"
+INFO: repacking table "fundtransfer.paymentrequest"
+INFO: repacking table "fundtransfer.sbprintinfo"
+INFO: repacking table "fundtransfer.sponserbankmaster"
+INFO: repacking table "fundtransfer.tbacorrespondinggls"
+INFO: repacking table "acc_trans"
+INFO: repacking table "applicant"
+INFO: repacking table "application"
+INFO: repacking table "asset_details"
+INFO: repacking table "authoriseprogress"
+INFO: repacking table "authtransaction"
+INFO: repacking table "batchexehistory"
+INFO: repacking table "branch_terminal_info"
+INFO: repacking table "cash_balance"
+INFO: repacking table "cashier_denomination"
+INFO: repacking table "category_master"
+INFO: repacking table "certificate_definition_details"
+INFO: repacking table "certificate_elements"
+INFO: repacking table "cheque_book_request"
+INFO: repacking table "cheque_book_request_data"
+INFO: repacking table "chq_book"
+INFO: repacking table "closure_manual_reasons"
+INFO: repacking table "components"
+INFO: repacking table "contract_mast"
+INFO: repacking table "crop_type_master"
+INFO: repacking table "cust_mast"
+INFO: repacking table "databasechangelog"
+INFO: repacking table "databasechangeloglock"
+INFO: repacking table "daydetails"
+INFO: repacking table "denomination"
+INFO: repacking table "dep_mast"
+INFO: repacking table "glaccount"
+INFO: repacking table "int_mast"
+INFO: repacking table "products"
+INFO: repacking table "district"
+INFO: repacking table "dr_roislab"
+INFO: repacking table "ecs_account_type"
+INFO: repacking table "eftcharges"
+INFO: repacking table "fa_trans"
+INFO: repacking table "fdroi"
+INFO: repacking table "grouplimits"
+INFO: repacking table "groupmaster"
+INFO: repacking table "grouptask"
+INFO: repacking table "inv_mast"
+INFO: repacking table "invest_cat"
+INFO: repacking table "invest_scrip"
+INFO: repacking table "item_details"
+INFO: repacking table "item_master"
+INFO: repacking table "loan_mast"
+INFO: repacking table "loan_roi_slab_by_sub_pur_cat"
+INFO: repacking table "loan_term_master"
+INFO: repacking table "loan_type_parameter"
+INFO: repacking table "lockedaccounts"
+INFO: repacking table "member_application"
+INFO: repacking table "member_contribution_history"
+INFO: repacking table "member_loan_application"
+INFO: repacking table "member_recovery_data"
+INFO: repacking table "message_sent"
+INFO: repacking table "mobile_info"
+INFO: repacking table "mobile_request"
+INFO: repacking table "mobile_send"
+INFO: repacking table "mode_of_recovery"
+INFO: repacking table "monthly_demand_extraction"
+INFO: repacking table "nxtnos"
+INFO: repacking table "od_cc_other_details"
+INFO: repacking table "od_cc_other_details_report"
+INFO: repacking table "passbook_printing_elements_definition"
+INFO: repacking table "purpose_master"
+INFO: repacking table "purpose_mst"
+INFO: repacking table "sb_branch_master"
+INFO: repacking table "sb_cadre_master"
+INFO: repacking table "sb_designation_master"
+INFO: repacking table "sb_employee_payment"
+INFO: repacking table "sb_employee_receipt"
+INFO: repacking table "sb_grade_master"
+INFO: repacking table "sb_member_account_receipt"
+INFO: repacking table "sb_member_clearing_transaction"
+INFO: repacking table "sb_member_gl_receipt"
+INFO: repacking table "sb_member_nominee"
+INFO: repacking table "sb_member_nominee_history"
+INFO: repacking table "sb_member_receipt"
+INFO: repacking table "sb_member_refund"
+INFO: repacking table "sb_member_transpart"
+INFO: repacking table "sb_membership_charges"
+INFO: repacking table "sb_nonmember_recovery"
+INFO: repacking table "sb_paybill_details"
+INFO: repacking table "sb_reasons"
+INFO: repacking table "sb_suppl_payments_details"
+INFO: repacking table "sb_surity_appl"
+INFO: repacking table "sb_surity_appl_history"
+INFO: repacking table "sb_user_reasons"
+INFO: repacking table "sb_welfare_charges"
+INFO: repacking table "sb_welfare_documents"
+INFO: repacking table "sb_welfare_member_dependents"
+INFO: repacking table "sb_welfare_member_documents"
+INFO: repacking table "sb_welfare_schemes"
+INFO: repacking table "sb_welfare_subschemes"
+INFO: repacking table "sb_zone_master"
+INFO: repacking table "sbclearingtransaction"
+INFO: repacking table "sbatmcardissuemaster"
+INFO: repacking table "sbclearingparameter"
+INFO: repacking table "sbcreditbureau_extract_master"
+INFO: repacking table "sbcreditbureau_suitfiled_master"
+INFO: repacking table "sbfdintrepaymentschedule"
+INFO: repacking table "sbholidaymaster"
+INFO: repacking table "sbloanchargesgeneral"
+INFO: repacking table "sbloanmiscodes"
+INFO: repacking table "sbloanmissubcodes"
+INFO: repacking table "sbloanrestructuringlog"
+INFO: repacking table "sbmenuentries"
+INFO: repacking table "sbmenustructure"
+INFO: repacking table "sbrbi_ecs_accepted"
+INFO: repacking table "sbrbi_ecs_file"
+INFO: repacking table "sbrptlateclearinghistory"
+INFO: repacking table "sbrptrbi_ecs_upload_log"
+INFO: repacking table "sbservice_charge_master"
+INFO: repacking table "sbstrmaster"
+INFO: repacking table "sbtdscustomermaster"
+INFO: repacking table "sbtdsmasterdefinition"
+INFO: repacking table "schedule_vs_gl_balance"
+INFO: repacking table "season_master"
+INFO: repacking table "share_warrant_info"
+INFO: repacking table "slab_wise_contribution"
+INFO: repacking table "sms_transaction_details"
+INFO: repacking table "spread_roi_master"
+INFO: repacking table "standinginstruction"
+INFO: repacking table "statement_request"
+INFO: repacking table "std_instr"
+INFO: repacking table "stop_demand_instruction"
+INFO: repacking table "stop_payment"
+INFO: repacking table "sub_purpose_mast"
+INFO: repacking table "supported_delivery_channels"
+INFO: repacking table "taluka_master"
+INFO: repacking table "taskmaster"
+INFO: repacking table "tblgroupingobjs"
+INFO: repacking table "tblgroupingusers"
+INFO: repacking table "tblobjects"
+INFO: repacking table "tblobjectsgroup"
+INFO: repacking table "tblobjforusers"
+INFO: repacking table "tblobjgrpforusergrp"
+INFO: repacking table "tblobjgrpforusers"
+INFO: repacking table "tblusers"
+INFO: repacking table "tblusersgroup"
+INFO: repacking table "tr_rule"
+INFO: repacking table "ts_uid_dtl"
+INFO: repacking table "upload_file_data"
+INFO: repacking table "userlimits"
+INFO: repacking table "village_master"
+INFO: repacking table "rbi_reports_dev.databasechangelog"
+INFO: repacking table "rbi_reports_dev.databasechangeloglock"
+INFO: repacking table "rbi_reports_dev.rbi_report"
+INFO: repacking table "rbi_reports_dev.rbi_report_instances"
+INFO: repacking table "rbi_reports_dev.rbi_report_properties"
+INFO: repacking table "tbl_cluster"
+INFO: repacking table "tbl_only_pkey"
+INFO: repacking table "tbl_gistkey"
+INFO: repacking table "tbl_with_dropped_column"
+INFO: repacking table "tbl_with_dropped_toast"
+-bash-4.1$ 
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+

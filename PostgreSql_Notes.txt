@@ -1,0 +1,5194 @@
+		                                PostgreSQL DBA Training 
+		*************************************************************************
+Database: it is a storage space or device which is used to manage or maintain only summarized data.
+
+Summarized data:
+
+->data which will gives proper meaning
+
+->which will be usefull for proper purpose.
+
+->which will be having proper format
+
+RAW Data:
+
+->data will not gives proper meaning.
+
+->it is not usefull for any purpose
+
+->it will not contains any format.
+
+
+Data Mining: getting summarized data from raw data , we will call it as data mining.
+
+we will achive data mining operations through ETL team.
+
+ETL : Extraction, Transformation, Loading
+
+to store the data, we have almost 30+ DWH technologies in market.
+
+
+1.oracle : oracle corporation
+2.ms sql : microsoft
+3.mysql  : oracle corporation
+4.PostgreSQL : postgresql.org
+5.mongodb
+6.Teradata
+7.greenplum: pivotal
+8.cassandra: apache
+9.mariadb :mariadb
+10.db2 : ibm
+11.couchbase
+12.cocoroachdb
+13.memsql
+14.pivotal hawq
+15.redis
+..etc..
+
+
+eventhough we have 30+ DWH techonoglies to store or maintain data, why need to go for postgresql?
+
+->for any product, they will have owner , we call that guy as vendor.
+->for utilizing product and for getting the support we need to pay licence and support charges to venodr based on cores.
+->always perfromance will be depends upon number of cpu's in the server, if we increase number cpu's for perfromance, automatically
+licencing price also increasing.
+
+->100gb data : 4 cpus in my server -paying licnece for 4 cpus.
+
+-> 1000gb data : 8 cpus in server-->lince charges will increase.
+
+->1000gb data (frequently used data 100gb(warm data)+very rarely used data 900gb(cold data)
+
+->cold data can keep into cheap commodity h/w, i.e hadoop.
+
+
+
+->all people required one product with below requirements.
+
+->database s/w should be either free of cost or cheap price.
+->it should support OLTP.
+->it should support OLAP. (online analytical processing)
+->it should support RDBMS.(data will be managed in the format of tables)
+->it should provide high level security
+->it should provide HA(high avaibility)
+->it should support DR(disater recovery)
+->it should support PITR(point intime recovery)
+
+bkp of database : 6am to 6:30am completed.
+
+app team : started data loading from 7am to 9am(100gb data)
+
+by mistake 9:1am that table got dropped.
+
+application team need that table with the data upto 9am.
+
+->even though we dont have enough backup until the specificed time, still we can capable to recovery data upto 9am,
+upto specific point of time recovering data we will call it as Point intime Recovery.
+
+->after few days they found the product with same feature , i.e PostgreSQL.
+
+->any s/w should be certified by ANSI.
+
+***********************************************************
+History of PostgreSQL
+***********************************************************
+->1983's by taking oracle and ms sql as reference 2 ph.d stundents from barclays univeristy , built one product,
+they named it as ingress.
+
+->again in 1989, with help of funding again started working on ingress, implemented lot of features, relaesed first version 1.0
+
+->1.6 version
+
+->version 6 (until 1995)
+
+->current stablized version in 13+, beta version : 14(another 2 months)
+
+->version 6 to 13 (from 1995 to 2021) : almost 150+ major and minor versions.
+
+->from laster the 3 years best growing RDBMS of the year award comes to postgresql.
+
+2020,2019,2017 (2018 oracle corporation take over mysql)
+
+->renamed it as PostgreSQL.
+
+->they strated community website, postgresql.org, u can download s/w, u can read documentation, u can give compalins/queries.
+
+->if something went wrong if my dba not in a position to fix the issue, who will help?
+
+some third party companies came into picture.
+
+->2nd quadrant (EDB team bought)
+->fujitsu
+->cybertech
+->pg experts
+->open scg (now merged with aws)
+->severlines
+->dbi
+
+by taking certification and support and responsibility matter issues, one more company came into picture.
+
+company name is EDB (enterprisedb)
+
+->these guys have agrrement with open osurce team, only for bussines.
+
+->EDB should not make any functionlity or code changes in the original s/w.
+
+->if required for bussiness purpose EDB can introuduce some user friendly tools.
+
+   ->EFM 
+   ->BART
+   ->EDB MTK
+   ->PEM 
+
+->1700sgd per core/cpu per year.
+
+->EDB is 18 times cheaper than oracle.
+
+->open source postgresql complete free, only money u need to spend for h/w, server,storage..
+
+->aws stopped provisining new oracle instance.
+
+->development -> staging/preprod/qa -> prod
+
+**********************************************************************
+PostgreSQL Architecture
+**********************************************************************
+Architecture: from starting point of query execution to until get the result set complete backend flow will call it as architecture.
+
+each and every database has its own architecture, and own terminology.
+
+coming to postgresql we have 3 layers of architecture.
+
+1.general architecture
+
+2.memory based architecture
+
+3.process based architecture
+
+**************************
+1.general architecture
+**************************
+from starting point of query execution to until get the result set complete backend flow we will call it as architecture.
+
+end user/application team/developers/DBA:  ->these guys will run the queries 
+
+(select/insert/delete ..etc queries ..request)
+
+->to access database server in postgresql we have 3 types of clinet interfaces.
+
+->GUI (pgAdminII/pgAdminIII/pgAdminIV, db waver, db xolo, talend) : developers will use
+
+->CLI (we have utility called psql) : dba's will use
+
+->Application servers(tomcat/jboss) : application team will use.
+
+application team will use connection string.
+
+->connection string means text file which will contains database server connection information.
+
+host=192.168.10.11 dbname=test  user=rambabu port=5432 password=....
+
+
+this text file app team will configure in tomcat/jboss server configuration file, once services started in tomact/jbos automatically
+
+connection will be established to db server.
+
+Note:  PostgreSQL purely operating system based architecture, what ever the operation we are doing on top of database level, each and every
+
+operation will appears on top of operating system.
+
+->in operating system level/db level worker we call it as process.
+
+
+username : rambabu
+
+client ip : 192.168.10.11
+
+dbname    : test
+
+query     : select * from emp;
+
+server    : 192.168.11.15
+
+
+request [user,dbname,query,server,clinetip]
+
+
+once end user raised/executed request/query first it will reaches to postgresql server operating system. on top of operating
+system there is a process called postmaster, it will takes your reqeust.
+
+->it will perfromas hostbased authentication
+
+->hostbased authentication : whether user rambabu connecting from authorized clinet ip address or not.
+
+in postgresql we have configuration file called pg_hba.conf file this file will be located under DATA directory.
+
+in this file if clinet ip mentioned, then we call it is authorized, if clinet ip not located in this file our connection will not be established.
+
+->if clinet ip is authorized, then immediately postmaster process will create postgres process id for your request and
+
+it will assigns that reqeust to postgresql server process, server process is backend process.
+
+from then onwards completely responisbility in postgresql server prcoess court.
+
+postmaster is dummy process, just like a superwiser process, to stop/start/mange/restart services we will use postmaster.
+
+by seeing postgres process id, postgresql server proces will come to know all the details.
+
+postgresql server will perfrom generic steps/plastic steps.
+
+
+generic steps/plastics:
+=======================
+
+username : rambabu  : dont have select permission on emp table.
+
+client ip : 192.168.10.11
+
+dbname    : test
+
+query     : selct * fmor emp;
+
+server    : 192.168.11.15
+
+
+
+1.syntaxer: whether user running query having correct syntx or not.
+
+2.securtiy check : whether user rambabu has select access on emp table or not.
+
+3.resolver : whether same query, same user already exeucted or not, it will check in cache. 
+
+if already executed instead of getting from disk , it will get the result set from cache.
+
+iq>whether any query first run is faster or second run is faster?
+A>if cache not cleared, it the query result existed in cache, alwasy second run is faster, as we are saving lot of resources and
+
+disk i/o utilization will be reduced.
+
+->in cache last 100 queries result set will be there.
+
+->if 101 query comes , 1st query result set will be cleared. FIFO algorithim.
+
+->if any app team/developer need exact performance metrics of query, always we will calean cahche and they will run the queries,
+
+they will get the exact mentrics.
+
+->some times if result set occupied more cache, our regulary queires will face out of memory error, to avoid this one we will drop 
+
+the cache, in realtime non bussiness our we will schedule clear cache.
+
+4.optimizer: if your query running first time, then optimizer will generate best least cost execution plan based on the statisctics information.
+
+optimizer will generate good execution plan only if you have updated statistics.
+
+statistics : information about your data, hw mny table,each table hw many rows, how many constarints, any bloat, any dead tupes,any
+indexs.
+
+
+select * from emp ;
+
+emp table data located in disk . 
+
+hard disk just like excel sheet.
+
+data storage location disk we will call it as block.
+
+dat asotrage spacce in memory we will call it as buffer.
+
+
+optimizer will get the memory location of disk (a1,a2,b1,b2), by hashing algorithim. [32 digit : 0001100011000]
+
+during generting execution plan, it will consider the resources like memory/cpu/disk io...
+
+->under DATA directory there is a configuration file postgresql.conf file, this file for resource management.
+
+like how much memory for complete postgresql instance, particular session, particular user, max connection limit, and other
+
+automation option.
+
+->it is just like a pfile in oracle, we can edit any time, around 330 parameters directly listed, whatever the values u want to change
+
+u can change it based on ur requirement.
+
+->pg_hba.conf file just like tnsname.ora file in oracle.
+
+
+5.disaptcher: optimizer will gives the exceution plan to disaptcher, its just like a labour, optimizer just like an engineer,
+disaptcher directly go to memory location and do it operation.
+
+
+enduser/dba/developer/app team -->cli[GUI/CLI/APP SERVER]-->running query we will call it as reqeust->request will reaches to postgresql
+
+server operating system-->
+
+             ->postmaster process -->
+
+                      ->by reading pg_hba.conf file perfroms hostbased authentication-->
+                   
+                                     ->creates postgres process id for your request -->
+
+                                                  ->process id assings to postgresql server process -->
+
+                                                             -->generic steps/plastics step-->
+                                                                             
+                                                                            -->dispather will give output
+
+note:  postmaster, postgresql server process,postgres process, pg_hba.conf file,postgresql.conf file.
+
+transaction : insert/delete/update ... 
+
+****************************************************************
+Memory Based Architecture
+****************************************************************
+->any worker in operating system we will call it as process.
+
+->based on the profession , we name worker.
+
+->based on the work, we will name the process.
+
+->postgresql purely operating system based architecture. whatever the operations we are doing on top of database level,
+
+each and everything will appears on top of operating system.
+
+
+scenorio1:
+
+os: windows
+ram :8gb
+cost : 10000rs
+
+scenori2:
+
+os: android
+ram: 8gb
+cost :10500rs
+
+both are same company?
+
+->first we will conside operating system (perfromance/user friendly/latest features)
+
+->99% of people will choose linux flavour operating (redhat/centos/ubuntu), 1% people going for windows os.
+
+
+scenorio2:
+
+os: android
+ram :8gb
+cost : 10000rs
+
+scenori2:
+
+os: android
+ram: 16gb
+cost :11000rs
+
+->if more RAM, system perfromance will be good, memory will play key role in system perfromance.
+
+normally if we take one server, if that server ram is 8gb, that means dont think only postgresql s/w running, in addition
+to postgresql lot of other process related to linux team/application team process will run.
+
+end of the day every one is ready to blame postgresql, u r the top memory consumer.
+
+internal operations: operations perfroming by backgroud process.
+
+->bg process always try to keep the database safe and secure and data consistent, and keep stats upto date, perfroming checkpoints
+
+on time, taking wal files backup.
+
+external operations: connection coming from users
+
+
+->for postgresql operation we need seperate memory, and they designed memory as layers/components.
+**************************************************************************************************
+
+local memory and shared memory:
+
+
+1.shared_buffers (upto 9.6 this is combination of 3 parameters shared_buffers+wal_buffers+clog_buffers), after 9.6 only if we mention
+
+       shared_buffers, automatically it will allocate remaining 2 values.
+
+wal_buffers : 1/32 of shared_buffers (example if shared_buffers 32gb, wal_buffers:1GB).
+
+->it is a piece of RAM, which will be used only for postgresql internal operations.
+
+->it is dedicated to postgresql internal operations only.
+
+->it will never cross that assgined shared_buffers limit.
+
+->it will never allow other to that limit
+
+->recomended value 25% of RAM we can allocate.
+
+->if you assign this value as bigger, your operations performance will be increased.
+
+->if required we can allocate 35% of RAM as shared_buffers, but before allocating we need to consider reaminign utilization.
+
+system RAM : 16gb
+
+shared_buffers : 4GB
+
+reamining RAM : 12GB
+
+if we are sure out of 12gb, for the last 10 days or 1 week, only utilization 50%, in that case we can alocate shared_buffers as 35%.
+
+->without knowing if we allocated 35%, suppose if reaminig ram utilized fully, there might be chnaces for server crash.
+
+->we need to configure this parameter in postgresql.conf file.
+
+->default value is : 128MB.  128kb we can set as minimum value.
+
+->if we chnage this parameter we need to restart postgresql services, that means downtime required.
+
+->while perfroming operations, it will be act as data cache.
+
+->transactions will never happen directly on disk/ all the transactions will be perfromed in buffer area/cache.
+
+->it is a just like SGA in oracle.
+
+->this shared_buffers instance specific.
+
+************************************************************
+2.work_mem
+************************************************************
+->this is piece of RAM
+
+->what ever the queries required hashing or sorting operation will requires this memory.
+
+->this will be operation based (each and every query we will call it as operation, from one session use can multiple operations)
+
+->default value is 4MB
+
+->100 queries running at a time how much work_mem will be consumed?
+
+
+100*4MB: 400mb : 4mb
+
+->this value will be consumed from reamining RAM.
+
+->while assinging work_mem value we need to consider max_connections value in postgreql.conf file.
+
+maxx_connections : at a time maximum number of connections allowed to instance..
+
+->if my max_connections value 200, my work_mem: 1gb, at a time if 100 connections coming to database , 100*1gb=100gb memory required,
+
+but we have only remaining RAM 12GB, first 12 operations will get enough memory , 13th session onwards it will thoruh outo memory
+
+error.
+
+that is the always we will assign work_mem value smaller.
+
+->Always plan max_connections *work_me <75% of remaining RAM.
+
+->100*80mb <75% of 12 GB.
+
+->if we are increasing more work_mem value our query perfromance will be increased.
+
+4mb,8mb,16mb,32mb,64mb,128mb,256mb,512mb,1gb....(more than 512gb or 1tb ram system we can go with 4 or 8gb work_mem)
+
+->we can assign worm_mem in different layers:
+
+
+1.instance_level : common for all sessions
+2.database level : if i set bigger value or one database, whatever the queries coming to that database, it will run faster.
+3.user level :  we can set work_mem at specific user level
+4.session level : only for specific session we can set bigger.
+
+->we need to configure in postgresql.conf file.
+
+->once operation done, assigned value auto release.
+
+->session which are not getting memory, it will though out of memory error.
+
+*********************************************
+3.temp_buffers
+*********************************************
+->it is a price of RAM
+->any queries if not completed with the assigned work_mem, it will use this temp_buffers
+->if you create temp tables
+->if you are handling more temp result sets.
+
+   >if nested joins (join inside join)/ sub queries
+
+ ex:  select * form emp where eno in(select eno from dept where dno in(select dno from hr));
+
+->inside query we will called as child query 
+->first part we will call it as parent
+->always parent will depends upon child query result set.
+->child query result sets we will call it as temp result sets.
+->default value is 64MB, realtime based on our joins queries/ and probability of temp result sets we will increase this value
+
+to 1gb/4gb../8gb/16gb
+
+************************************************
+4.maintance_work_mem
+************************************************
+->it is also pieces of RAM.
+->to keep database safe and secure and to get faster perfromance , we will do maintiance activties.
+
+VACUUM
+ANALYZE
+VACUUM FULL
+REINDEX
+
+while perfroming maitniance activties, thiw memory will be required.
+
+->Default value : 64MB
+
+->min : 1MB
+
+************************************************
+5.autovacuum_work_mem
+************************************************
+->this is also piece of RAM.
+
+->from the above mentioned maintiance activties we can automate VACUUM and ANALYZE operations only.
+
+->by default there is a option called autovacuum in postgresql.conf file, default it is on,
+
+that means always autovacuum launhcer one backuground process up and running, it will collect the list of tables required 
+
+maintiance operation and it will perform vacuum/analyze based on the criteria.
+
+->defautl value -1
+
+->defautl values means same as maitniance_work_mem.
+
+->if we make this option on, then it will use autovacuum_work_mem.
+
+***************************************
+6.effective_cache_size
+***************************************
+->it is a dummy value.
+
+->whenever new query coming for execution it will check for the scope of RAM avaibility.
+
+->if it is getting bigger value, indexes perfromance will be increased, there might be huge scope for indexes perfromances.
+
+->if it is getting less value, less posibility for indexes usages.
+
+->some times indexes are good for performance , some times its bad.
+
+->we can allocated 85% of RAM as effective_cache_size, otu of 16GB RAM k i can allocated 12GB RAM as effective_cache_Size.
+
+->in postgresql.conf file only
+
+->Defautl values is 128MB.
+
+**************************************************
+Process Based Architecture
+**************************************************
+->mandatory process: by default while starting postgresql instances services below process will come up
+--------------------
+1.postmaster process : to stop or start postgresql instance services we will use this process.
+
+->to perfrom this operation we have an utility called pg_ctl.
+
+->once u started services using pg_ctl utility , internally it will converts as postmaster process.
+
+2.writer process/ wal writer process :
+
+->in postgresql each and every transaction will be recorded.
+
+->initially all the transactions will be located under wal_buffer area.
+
+->once transactions committed, all the committed transactions will be written into one file, we call that file as WAL (write ahead log file)
+
+->each WAL file size 16MB, that means every 16mb size of transactions new WAL file will be created.
+
+-> all the WAL files will be created under PG_WAL directory, it is located under DATA directory.
+
+->until 9.6, name of this directory pg_xlog.
+
+->capacity of this directory is 1GB.
+
+->that means at a time 64 WAL files can survive, if 65th comes, first file will be removed.
+
+->if WAL files removed there will be no impact to the system.
+
+->if anycase, we get a situation to recover the data upto specific point of time, in that case we need old WAL files.
+
+->by changing max_wal_keep_segments parameter to bigger value, 10000 files. (this is upto 12 version)
+
+->max_wal_keep_size (13 onwards) : size in MB's : 4096 (4GB)
+
+->we increase the WAL file size from 16MB to bigger value, perfromance will be good, but if server crashed for recovery it will take huge time.
+
+->WAL filenaming designed based on timestamp and hash value.
+
+->postgresql each and every transaction by default autocommit.
+
+->if you want to manage commit or rollback operation you need to run the transaction in BTET (begin transaction and end transaction)
+
+BEGIN;
+update emp set no=10 where no=1;
+End/commit; (rollback : it will drop the new value)
+
+
+4.bg writer process : it will flushes all the dirty buffers from shared_buffers to disk(data files) with the frequency of 200ms.
+
+3.check pointer process : there might be chances for gap b/w every run of bg writer, so for every 5 minutes checkpointer process
+
+will flushes completely if any dirty buffers.
+
+checkpoint_timeout:  
+
+5.stats collector process : to keep the system statistics upto date , this stats collector process will up and running.
+
+7.logical replication launcher process : we will use this process as part of logical replication.
+
+
+->optional processes: if you want you can enable, if u want u can disable.
+----------------------
+6.autovacuum launcher process (eventhough coming as default process, still we can enable/disable it):
+
+by default this option is on, so autovacuum launcher process will up and running,
+
+it will collect list of tables which required vacuum and analyze, based on thresholds.
+
+->if you want to u can disable, but make sure u should plan mainitance activties regularlry.
+
+
+1.logger process : to track each and every operation happening at database level will be recorded here,
+
+we need to enable audit log (just like audit+alert log in oracle)
+
+2.archiver process : for safety , we can enable archive mode, if we enable archive mode, archiver process will up and running.
+
+it will takes wal file backup immeditely, we need to provide the location, where we need to keep our archive files.
+
+3.wal sender process : in replication process data will be copied from one server to another server, source server we will call it as 
+
+master/primary server.
+
+target server we will call it as slave/standby/secondary server.
+
+always data will be replicated from master to slave.
+
+from aster server wal sender process will sends the transaction logs.
+
+4.wal reciver process:
+
+from slave server, wal receiver process will receive the transactions logs from wal sender process.
+
+*********************************************
+Linux Setup
+*********************************************
+
+->https://www.vmware.com/asean/products/workstation-player/workstation-player-evaluation.html  (download vmware for windows)
+
+->download redhat linux file
+
+http://mirror.aminidc.com/redhat/RHEL_7.2/Server/rhel-server-7.2-x86_64-dvd.iso  (to download)
+
+->install vmware :
+
+next ->next --finish 
+
+->go to desktop->vmware icon will be there
+
+->open vmware player-->create new virtual machine->select iso file->give user name and password(its for our user+root)-->
+       your server display name--> allocate disk space :50gb-->split virtual disk into multiple files-->
+                    customize hardware ->change memory if required->finish  : for the first time for installaion it will take more than
+
+ 25 minutes.-->it will prompt for logins, give the details login and comeback.
+
+
+->if already machine is there, to bring up we need start ->selec vmware and clikc on start ->enter logins 
+
+->server is ready but not userfriendly.
+
+->to make linux more flexible we have s/w called putty.
+
+->download putty
+
+https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html (click on 64 bit windows)
+
+->click next next ->finish
+
+->on top desktop or start menu putty icon will appear.
+
+by running ifconfig command in vmware get the ip.
+
+[ram@node2 ~]$ ifconfig -a
+eno16777736: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.38.133  netmask 255.255.255.0  broadcast 192.168.38.255
+        inet6 fe80::20c:29ff:fe4c:4483  prefixlen 64  scopeid 0x20<link>
+        ether 00:0c:29:4c:44:83  txqueuelen 1000  (Ethernet)
+        RX packets 97  bytes 10857 (10.6 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+
+
+1.which user connected:
+
+[ram@node2 ~]$ whoami
+ram
+
+2.switch form one user to another user
+
+[ram@node2 ~]$ su - root
+Password:
+Last login: Mon May 31 02:15:20 PDT 2021 on pts/0
+[root@node2 ~]# whoami
+root
+
+3.in linux we call drives as mount points.
+
+
+4.list out mount points:
+
+[root@node2 ~]# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda3        48G   31G   18G  65% / (root file system) 
+devtmpfs        904M     0  904M   0% /dev
+tmpfs           913M     0  913M   0% /dev/shm
+tmpfs           913M  8.7M  904M   1% /run
+tmpfs           913M     0  913M   0% /sys/fs/cgroup
+/dev/sda1       297M  113M  185M  38% /boot
+tmpfs           183M     0  183M   0% /run/user/1000
+
+all the sub file systems/mounts points located under root mount point only.
+
+5.to check current path(pwd)
+
+[root@node2 ~]# pwd
+/root
+
+6.list out submountpoints:
+
+[root@node2 /]# du -sh *
+24M     etc
+43M     home
+1.1G    opt
+47M     tmp
+21G     u01
+2.7G    usr
+6.3G    var
+
+7.list out users in linux operating system
+
+[root@node2 /]# cat /etc/passwd|grep /bin/bash
+root:x:0:0:root:/root:/bin/bash
+ram:x:1000:1000:ram:/home/ram:/bin/bash
+postgres:x:26:26:PostgreSQL Server:/var/lib/pgsql:/bin/bash
+gpadmin:x:1001:1001::/home/gpadmin:/bin/bash
+user998:x:1002:1002::/home/user998:/bin/bash
+enterprisedb:x:1003:1004:EDB Postgres Advanced Server:/opt/edb/as10:/bin/bash
+efm:x:1004:1005::/var/efm:/bin/bash
+oracle:x:1005:1006::/home/oracle:/bin/bash
+builder:x:1006:1008::/home/builder:/bin/bash
+mockbuild:x:1007:1009::/home/mockbuild:/bin/bash
+simbhu:x:1008:1010::/home/simbhu:/bin/bash
+ravi:x:1009:1011::/home/ravi:/bin/bash
+senthil:x:1010:1012::/home/senthil:/bin/bash
+arnob:x:1011:1013::/home/arnob:/bin/bash
+anudeep:x:1012:1014::/home/anudeep:/bin/bash
+
+
+8.create user :
+
+[root@node2 /]# useradd pgsqljune
+[root@node2 /]# cat /etc/passwd|grep pgsqljune
+pgsqljune:x:1013:1015::/home/pgsqljune:/bin/bash
+[root@node2 /]#
+
+whenever we have added user, automatically with the same name group also will be created.
+
+9.lis of groups
+
+[root@node2 /]# cat /etc/group|grep pgsqljune
+pgsqljune:x:1015:
+
+10.create text file
+
+vi filename
+
+esc i (it will comes to insert mode)
+
+type whatever u want.
+
+esc : wq (save)
+
+[root@node2 lib]# chown -R pgsqljune:pgsqljune text
+[root@node2 lib]# ls -ltr text
+-rw-r--r-- 1 pgsqljune pgsqljune 19 Jun  3 18:27 text
+
+
+10.copy file
+
+[root@node2 lib]# cp text text_new
+
+
+11.check differentce b/w both files.
+
+[root@node2 lib]# diff text text_new
+[root@node2 lib]# vi text_new
+[root@node2 lib]#
+[root@node2 lib]# diff text text_new
+1a2,3
+>
+> im fine
+[root@node2 lib]# cat text_new
+hi ram how are you
+
+im fine
+[root@node2 lib]#
+
+
+12.mv command (renaming file)
+
+[root@node2 lib]# mv text_new  pgsql_text
+
+13.normall users can't run any command from anyware except root. root is sudo user, we can make our user
+as sudo user.
+
+14.to make any user as sudo user
+
+keep etnrries in /etc/sudeors file.
+
+pgsqljune  ALL=(ALL)    ALL
+
+15.list of process running:
+
+
+[root@node2 lib]# ps -ef
+UID         PID   PPID  C STIME TTY          TIME CMD
+root          1      0  0 18:09 ?        00:00:01 /usr/lib/systemd/systemd --switched-root --system --deserialize 21
+root          2      0  0 18:09 ?        00:00:00 [kthreadd]
+root          3      2  0 18:09 ?        00:00:00 [ksoftirqd/0]
+root          7      2  0 18:09 ?        00:00:00 [migration/0]
+root          8      2  0 18:09 ?        00:00:00 [rcu_bh]
+root          9      2  0 18:09 ?        00:00:00 [rcuob/0]
+root         10      2  0 18:09 ?        00:00:00 [rcuob/1]
+root         11      2  0 18:09 ?        00:00:00 [rcuob/2]
+root         12      2  0 18:09 ?        00:00:00 [rcuob/3]
+root         13      2  0 18:09 ?        00:00:00 [rcuob/4]
+root         14      2  0 18:09 ?        00:00:00 [rcuob/5]
+root         15      2  0 18:09 ?        00:00:00 [rcuob/6]
+
+
+all the child process will be under parent process id, if u kill parent process id, all the sub process will be cleared.
+
+16.how much memory allocated:
+
+[root@node2 lib]# free -m
+              total        used        free      shared  buff/cache   available
+Mem:           1824         216        1046           8         561        1385
+Swap:          2048           0        2048
+
+number of cpus:
+===============
+[root@node2 lib]# lscpu
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                1
+
+
+17)identifity list of process id's conusmbing more cpu & memory.
+
+[root@node2 lib]#
+[root@node2 lib]# top
+top - 18:44:15 up 34 min,  2 users,  load average: 0.00, 0.01, 0.05
+Tasks: 413 total,   2 running, 411 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.3 us,  0.3 sy,  0.0 ni, 99.0 id,  0.3 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :  1868660 total,  1070648 free,   222956 used,   575056 buff/cache
+KiB Swap:  2098172 total,  2098172 free,        0 used.  1417516 avail Mem
+
+   PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND
+  2788 root      20   0  146428   2364   1420 R  0.7  0.1   0:00.07 top
+     1 root      20   0   41260   3680   2336 S  0.0  0.2   0:01.46 systemd
+     2 root      20   0       0      0      0 S  0.0  0.0   0:00.04 kthreadd
+     3 root      20   0       0      0      0 S  0.0  0.0   0:00.10 ksoftirqd/0
+     7 root      rt   0       0      0      0 S  0.0  0.0   0:00.00 migration/0
+     8 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcu_bh
+     9 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcuob/0
+    10 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcuob/1
+
+18)when was the server rebooted/restart
+
+
+[root@node2 lib]# uptime
+ 18:44:58 up 35 min,
+
+to change directory permissions in Linux:
+
+chmod +rwx ram.txt to add permissions.
+chmod -rwx testdir to remove permissions.
+chmod +x ram.txt to allow executable permissions.
+chmod -wx ram.txt to take out write and executable permissions.
+
+
+Note that “r” is for read, “w” is for write, and “x” is for execute. 
+
+
+0 = ---
+1 = --x
+2 = -w-
+3 = -wx
+4 = r-
+5 = r-x
+6 = rw
+7 = rwx 
+
+chmod 777 foldername will give read, write, and execute permissions for everyone.
+chmod 700/600/400 foldername will give read, write, and execute permissions for the user only.
+chmod 327 foldername will give write and execute (3) permission for the user, w (2) for the group, and read, write, and execute for the users.
+
+
+permissions comination of 3 numbers : 1: user who created  2: user who is going to access 3.group will the resptive prvileges.
+
+https://www.pluralsight.com/blog/it-ops/linux-file-permissions7
+
+
+400  
+600
+745
+700
+
+->we can install postgresql s/w in different ways.
+
+1)->source code installation: everything customized, during same s/w installation in the same server, it is good. by default audit log will
+
+ not come,  postgresql services autostartup option will not work.
+
+2)->binaries installation/yum installation/rpm installation : cusotmization not possible, within the server same version s/w if need
+
+to install 2 times , new one will replaces previous one.
+
+->auditlog enabled state.
+
+->services auto startup enabled state.
+
+3)->runfile installation : EDB postgres, upto 10 version run file installation is there.
+
+
+*******************************************************
+PostgreSQL Source Code Installation
+*******************************************************
+
+->to keep s/w we need one location 
+
+[root@node2 ~]# mkdir /var/lib/pgsql
+
+->create postgres user
+
+[root@node2 ~]# useradd postgres
+[root@node2 ~]# cat /etc/passwd|grep postgres
+postgres:x:1014:1016::/home/postgres:/bin/bash
+
+->make postgres user as sudo user.
+
+->chmod 600/700/700 /etc/sudoers
+
+vi /etc/sudoers
+
+postgres ALL=(ALL)      ALL (under root ALL=(ALL))
+
+->chnage the owner ship of your s/w folder
+
+[root@node2 pgsql]# chown -R postgres:postgres /var/lib/pgsql
+
+[root@node2 pgsql]# cd /var/lib/pgsql
+
+->download the required version postgresql s/w
+
+https://www.postgresql.org/ftp/source/ (google it)
+
+->select version, and click on copy link address either tar.gz file tar.bz2 file.
+
+[root@node2 pgsql]# wget https://ftp.postgresql.org/pub/source/v13.3/postgresql-13.3.tar.gz
+
+->[root@node2 pgsql]# tar -xvf postgresql-13.3.tar.gz
+
+
+[root@node2 pgsql]# cd postgresql-13.3
+
+[root@node2 postgresql-13.3]# pwd
+/var/lib/pgsql/postgresql-13.3
+
+[root@node2 postgresql-13.3]# ls -ltr
+total 744
+-rw-r--r--  1 1107 1107   1213 May 10 13:41 README
+-rw-r--r--  1 1107 1107   1665 May 10 13:41 Makefile
+-rw-r--r--  1 1107 1107    277 May 10 13:41 HISTORY
+-rw-r--r--  1 1107 1107   4278 May 10 13:41 GNUmakefile.in
+-rw-r--r--  1 1107 1107   1192 May 10 13:41 COPYRIGHT
+-rw-r--r--  1 1107 1107  82388 May 10 13:41 configure.in
+-rwxr-xr-x  1 1107 1107 568656 May 10 13:41 configure
+-rw-r--r--  1 1107 1107    490 May 10 13:41 aclocal.m4
+drwxrwxrwx 57 1107 1107   4096 May 10 13:52 contrib
+drwxrwxrwx  2 1107 1107   4096 May 10 13:52 config
+drwxrwxrwx  3 1107 1107     82 May 10 13:52 doc
+-rw-r--r--  1 1107 1107  63684 May 10 13:53 INSTALL
+drwxrwxrwx 16 1107 1107   4096 May 10 13:53 src
+[root@node2 postgresql-13.3]#
+
+->whether anyone already postgresql installed or not.
+
+->postgresql source code default binaries/utilies installation location will be /usr/local. under this folder pgsql folder will create.
+
+->make sure pgsql folder not existed under /usr/local, if existed means already some one installed.
+
+->if pgsql not there, below command directly execute.
+
+->if pgsql existed, we need to create our own directory.
+
+mkdir /usr/local/pgsql_rambabu
+
+[root@node2 postgresql-13.3]# ./configure --without-readline --without-zlib  (demo linux)  (it will check whether all the required libraries
+
+and dependencies files avaibile or not)
+
+[root@node2 postgresql-13.3]# ./configure (configure)
+
+or
+
+[root@node2 postgresql-13.3]# ./configure  --prefix=/usr/local/pgsql_rambabu
+
+
+[root@node2 postgresql-13.3]# make(all the required libraries paths it will export, means it will make ready for installed.
+
+
+-->[root@node2 postgresql-13.3]# make
+
+make[1]: Leaving directory `/var/lib/pgsql/postgresql-13.3/config'
+All of PostgreSQL successfully made. Ready to install.
+[root@node2 postgresql-13.3]#
+
+-->[root@node2 postgresql-13.3]# make install
+make[1]: Leaving directory `/var/lib/pgsql/postgresql-13.3/config'
+PostgreSQL installation complete.
+[root@node2 postgresql-13.3]#
+
+
+->install contrib module : in addition to existing features, postgresql given option to use some other features as well.
+
+we can achive this with extension.. to get the extnesions we need to install contrib module.
+
+[root@node2 postgresql-13.3]# pwd
+/var/lib/pgsql/postgresql-13.3
+
+[root@node2 postgresql-13.3]# cd contrib
+
+[root@node2 contrib]# make
+[root@node2 contrib]# make install
+
+******************************
+validation
+******************************
+[root@node2 bin]#cd /usr/local/pgsql/bin
+[root@node2 bin]# pwd
+/usr/local/pgsql/bin
+
+[root@node2 bin]# /usr/local/pgsql/bin/pg_config
+BINDIR = /usr/local/pgsql/bin
+DOCDIR = /usr/local/pgsql/share/doc
+HTMLDIR = /usr/local/pgsql/share/doc
+INCLUDEDIR = /usr/local/pgsql/include
+PKGINCLUDEDIR = /usr/local/pgsql/include
+INCLUDEDIR-SERVER = /usr/local/pgsql/include/server
+LIBDIR = /usr/local/pgsql/lib
+PKGLIBDIR = /usr/local/pgsql/lib
+LOCALEDIR = /usr/local/pgsql/share/locale
+MANDIR = /usr/local/pgsql/share/man
+SHAREDIR = /usr/local/pgsql/share
+SYSCONFDIR = /usr/local/pgsql/etc
+PGXS = /usr/local/pgsql/lib/pgxs/src/makefiles/pgxs.mk
+CONFIGURE =  '--without-readline' '--without-zlib'
+CC = gcc -std=gnu99
+CPPFLAGS = -D_GNU_SOURCE
+CFLAGS = -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -O2
+CFLAGS_SL = -fPIC
+LDFLAGS = -Wl,--as-needed -Wl,-rpath,'/usr/local/pgsql/lib',--enable-new-dtags
+LDFLAGS_EX =
+LDFLAGS_SL =
+LIBS = -lpgcommon -lpgport -lpthread -lrt -ldl -lm
+VERSION = PostgreSQL 13.3
+[root@node2 bin]#
+
+
+as pg_config utility working fine, we can treat as s/w installed successfully.
+
+by default with source code only installation will be completed, postgresql services will not come.
+
+->to bring up services we need default data files and configuration files.
+
+->to keep all the above files, we need one directory, we call that directory as DATA directory.
+
+
+->genrating default data files and configuration files, we will call it as database initilization.
+
+->to perfrom database initializtion we have an utility called initdb.
+
+->all the folders relaetd to postgresql s/w, should be owned by postgres user.
+
+[root@node2 bin]# mkdir /var/lib/pgsql/DATA
+[root@node2 bin]# chown -R postgres:postgres /usr/local/pgsql/
+[root@node2 bin]# chown -R postgres:postgres /var/lib/pgsql/DATA/
+[root@node2 bin]#
+
+[root@node2 bin]#su - postgres
+
+
+->any postgresql related operation should be perfromed by postgres user.
+
+[postgres@node2 ~]$ /usr/local/pgsql/bin/initdb -D /var/lib/pgsql/DATA/
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.UTF-8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/pgsql/DATA ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... America/Los_Angeles
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+initdb: warning: enabling "trust" authentication for local connections
+You can change this by editing pg_hba.conf or using the option -A, or
+--auth-local and --auth-host, the next time you run initdb.
+
+Success. You can now start the database server using:
+
+    /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ -l logfile start
+
+[postgres@node2 ~]$
+
+[postgres@node2 ~]$ cd /var/lib/pgsql/DATA/
+[postgres@node2 DATA]$ ls -ltr
+total 52
+-rw------- 1 postgres postgres     3 Jun  4 18:42 PG_VERSION
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_twophase
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_tblspc
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_stat_tmp
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_stat
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_snapshots
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_serial
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_replslot
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_notify
+drwx------ 4 postgres postgres    34 Jun  4 18:42 pg_multixact
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_dynshmem
+drwx------ 2 postgres postgres     6 Jun  4 18:42 pg_commit_ts
+-rw------- 1 postgres postgres 28035 Jun  4 18:42 postgresql.conf
+-rw------- 1 postgres postgres    88 Jun  4 18:42 postgresql.auto.conf
+-rw------- 1 postgres postgres  1636 Jun  4 18:42 pg_ident.conf
+-rw------- 1 postgres postgres  4760 Jun  4 18:42 pg_hba.conf
+drwx------ 2 postgres postgres    17 Jun  4 18:42 pg_xact
+drwx------ 3 postgres postgres    58 Jun  4 18:42 pg_wal
+drwx------ 2 postgres postgres    17 Jun  4 18:42 pg_subtrans
+drwx------ 2 postgres postgres  4096 Jun  4 18:42 global
+drwx------ 5 postgres postgres    38 Jun  4 18:42 base
+drwx------ 4 postgres postgres    65 Jun  4 18:42 pg_logical
+[postgres@node2 DATA]$
+
+->to start/stop/manage services we have any utility called pg_ctl.
+
+
+[postgres@node2 bin]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ status
+pg_ctl: no server running
+
+[postgres@node2 bin]$
+[postgres@node2 bin]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ start  (postmaster.pid)
+
+[postgres@node2 bin]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ stop
+
+[postgres@node2 bin]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ start
+
+[postgres@node2 bin]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ restart (stopping and starting in a on shot)
+
+[postgres@node2 bin]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ restart (reload) : no downtime, just refresh like f5.
+
+as the services came up below are the default processes.
+
+[postgres@node2 bin]$ ps -ef|grep postgres
+root      15198   2311  0 18:41 pts/0    00:00:00 su - postgres
+postgres  15199  15198  0 18:41 pts/0    00:00:00 -bash
+postgres  15297      1  0 18:45 ?        00:00:00 /usr/local/pgsql/bin/postgres -D /var/lib/pgsql/DATA
+postgres  15299  15297  0 18:45 ?        00:00:00 postgres: checkpointer
+postgres  15300  15297  0 18:45 ?        00:00:00 postgres: background writer
+postgres  15301  15297  0 18:45 ?        00:00:00 postgres: walwriter
+postgres  15302  15297  0 18:45 ?        00:00:00 postgres: autovacuum launcher
+postgres  15303  15297  0 18:45 ?        00:00:00 postgres: stats collector
+postgres  15304  15297  0 18:45 ?        00:00:00 postgres: logical replication launcher
+postgres  15315  15199  0 18:47 pts/0    00:00:00 ps -ef
+postgres  15316  15199  0 18:47 pts/0    00:00:00 grep --color=auto postgres
+
+
+
+->if your server reboots, automatically postgresql services will nto come up, so we need to enable autostartup option.
+
+auto startup:
+=============
+[root@node2 ~]# cd /etc/rc.d/
+[root@node2 rc.d]# chmod +x rc.local
+[root@node2 rc.d]# vi rc.local
+esc : i
+su - postgres -c '/usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA/ start'
+esc : wq
+
+
+environment variables setup:
+============================
+[postgres@node2 home]$ cd
+[postgres@node2 ~]$
+[postgres@node2 ~]$ ls -la
+total 20
+drwx------   4 postgres postgres  106 Jun  4 18:56 .
+drwxr-xr-x. 15 root     root     4096 Jun  4 18:02 ..
+-rw-------   1 postgres postgres  666 Jun  4 18:56 .bash_history
+-rw-r--r--   1 postgres postgres   18 Jul  8  2015 .bash_logout
+-rw-r--r--   1 postgres postgres  193 Jul  8  2015 .bash_profile
+
+[postgres@node2 ~]$ vi .bash_profile
+
+export PATH=$PATH:/usr/local/pgsql/bin/
+export PGDATA=/var/lib/pgsql/DATA/
+
+[postgres@node2 ~]$ pg_ctl status/stop/start
+
+
+===========================================
+object flow in postgresql
+===========================================
+->one postmaster means one instance
+
+->one instance means one data directory,one port.
+
+->withing the servers if we need multiple instances we need multiple data directories and multiple ports.
+
+->default port is 5432
+
+->under instance multiple databases are there.
+
+->under each database multiple schemas are there.
+
+->here schema is different and user is different, user only for login purpose, under schema we can create objects.
+
+->crossdb join not possible.
+
+->cross schema join possible if both the schemas are in same database.
+
+->schema just a logical representation of obejcts
+
+->database, tables.materialized views these all are physical objecsts.
+
+->Eacha nd every objected refereed by object id (oid)
+
+->all the phsyical data files will be appreared with oid only.
+
+===============================================
+DATA directory explanation
+===============================================
+if you want to run any query , that respective data will be taken from data directory only.
+
+PG_VERSION : version details.
+
+[postgres@node2 DATA]$ cat PG_VERSION
+13
+
+pg_twophase : rollback/commit phases, for all the BTET mode transactions it will maitains the stats.
+
+pg_tblspc: it will contains only user created tablespaces information.
+
+pg_snapshots : we can create snapshots.
+
+pg_serial : all the serial transactions status will be maintained.
+
+
+1 2 3 4(parallel)       
+2
+3
+4
+(serial)
+
+pg_replslot : during replication configruation will see.
+
+pg_notify : all the notification messages ifnormation will be stored here.
+
+pg_dynshmem: it will maintians shared_buffers run time utilizaion.
+
+pg_commit_ts : it will maintains only committed transactions information.
+
+postgresql.conf : this is resource management configuration file, it will decide which parameter having how much value.
+
+postgresql.auto.conf : we can change parameters in postgresql.conf file, at the same time we can change parameter using alter system set command like below.
+
+vi postgresql.conf
+work_mem=250M
+
+or 
+
+login to database,
+alter system set work_mem=500MB;
+
+alter system set comamnd parameters will be stored here.
+
+->always postgresql.auto.conf file is the priority.
+
+pg_ident.conf : normally os level users different, db level users different, some times for both os and db level we will create common
+
+user, we will call it as LDAP account. those accounts we will mention here.
+
+pg_hba.conf : to manage or prevent remote based connections we will use this file. postmaster will perfrom host based authentication
+
+by reading this file.
+
+pg_wal: all the transaction logs/wal files inforation will be here.
+
+pg_subtrans : all the sub queries information will be here.
+
+global : global objects data will be stored here.
+
+base : it will contains all database and its objects data. if u have 3 database, u will see 3 folder unders base directory.
+
+postmaster.opts :how we have started services.
+
+[postgres@node2 DATA]$ cat postmaster.opts
+/usr/local/pgsql/bin/postgres "-D" "/var/lib/pgsql/DATA"
+
+postmaster.pid : once instance up and running , then only it will appears. it will gives all the details.
+
+[postgres@node2 DATA]$ cat postmaster.pid
+2787 (postmaster process id)
+/var/lib/pgsql/DATA : dd
+1622944268 : postmaster instance start 
+5432 : port
+/tmp : scoket info
+localhost  : host info
+137550195     32768  (kernel memory)
+ready 
+
+pg_stat :system stats information
+pg_logical : it will manages logical replication data
+pg_stat_tmp : temp stats information
+
+
+Limit	                Value
+Maximum Database Size	Unlimited
+Maximum Table Size	32 TB
+Maximum Row Size	1.6 TB
+Maximum Field Size	1 GB
+
+====================================================
+database connectivity
+====================================================
+[postgres@node2 bin]$ psql
+psql (13.3)
+Type "help" for help.
+
+postgres=#
+
+->connection information:
+
+postgres=# \c
+You are now connected to database "postgres" as user "postgres".
+
+->list of databases:
+
+postgres=# \l
+                                  List of databases
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges
+-----------+----------+----------+-------------+-------------+-----------------------
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+           |          |          |             |             | postgres=CTc/postgres
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+           |          |          |             |             | postgres=CTc/postgres
+(3 rows)
+
+->list of users:
+
+postgres=# \du
+                                   List of roles
+ Role name |                         Attributes                         | Member of
+-----------+------------------------------------------------------------+-----------
+ postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
+
+SUPERUSER(user will became super user) | NOSUPERUSER
+CREATEDB(user can create new Database) | NOCREATEDB
+CREATEROLE(user can create user/role)  | NOCREATEROLE
+INHERIT (user can achive inherit privilege)| NOINHERIT
+LOGIN (user can login database)        | NOLOGIN
+REPLICATION(user can build replication) | NOREPLICATION
+BYPASSRLS(we can use normal user)       | NOBYPASSRLS
+CONNECTION LIMIT connlimit              | we can set connection limit for user
+
+list of schemas:
+
+postgres=# \dn
+  List of schemas
+  Name  |  Owner
+--------+----------
+ public | postgres
+(1 row)
+
+
+->each and every database by default public schema will be created.
+
+->it is completely database specific.
+
+->create database:
+==================
+postgres=# create database rambabu;
+CREATE DATABASE
+
+postgres=# \l rambabu
+                               List of databases
+  Name   |  Owner   | Encoding |   Collate   |    Ctype    | Access privileges
+---------+----------+----------+-------------+-------------+-------------------
+ rambabu | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+(1 row)
+
+->switch from one database to another database:
+
+template1=# \c template0
+FATAL:  database "template0" is not currently accepting connections
+Previous connection kept
+template1=#
+
+normally template0 will accept any conenctions, so we call this database dumb database.
+
+we can use this database as template while creating new databases.
+
+create user:
+============
+rambabu=# create user sam;
+CREATE ROLE
+
+rambabu=# \du sam
+           List of roles
+ Role name | Attributes | Member of
+-----------+------------+-----------
+ sam       |            | {}
+
+rambabu=# alter user sam with password 'sam';
+ALTER ROLE
+
+rambabu=# alter user sam with SUPERUSER CREATEDB CREATEROLE;
+ALTER ROLE
+
+rambabu=# \du sam
+                       List of roles
+ Role name |            Attributes             | Member of
+-----------+-----------------------------------+-----------
+ sam       | Superuser, Create role, Create DB | {}
+
+
+rambabu=# alter user sam valid until '07-10-2021';
+ALTER ROLE
+rambabu=# \du sam
+                            List of roles
+ Role name |                 Attributes                  | Member of
+-----------+---------------------------------------------+-----------
+ sam       | Superuser, Create role, Create DB          +| {}
+           | Password valid until 2021-07-10 00:00:00-07 |
+
+
+->set max connection limit for user:
+
+rambabu=# show max_connections;
+ max_connections
+-----------------
+ 100
+(1 row)
+
+rambabu=# alter user sam connection limit 10;
+ALTER ROLE
+rambabu=# \du sam
+                            List of roles
+ Role name |                 Attributes                  | Member of
+-----------+---------------------------------------------+-----------
+ sam       | Superuser, Create role, Create DB          +| {}
+           | 10 connections                             +|
+           | Password valid until 2021-07-10 00:00:00-07 |
+
+
+->connect rambabu database with sam user.
+
+[postgres@node2 bin]$ psql -d rambabu -U sam
+psql (13.3)
+Type "help" for help.
+
+rambabu=# \c
+You are now connected to database "rambabu" as user "sam".
+rambabu=#
+
+
+->to promopt for password
+
+[postgres@node2 bin]$ psql -d rambabu -U sam -W
+Password:
+
+
+craete schema:
+
+rambabu=# create schema test;
+CREATE SCHEMA
+rambabu=# \dn
+  List of schemas
+  Name  |  Owner
+--------+----------
+ public | postgres
+ test   | sam
+(2 rows)
+
+
+create objects:
+================
+rambabu=# create table test.emp(no int,name varchar);
+CREATE TABLE
+rambabu=# create table emp(no int,name varchar);
+CREATE TABLE
+
+
+->tables under public schema:
+
+rambabu=# \dt
+       List of relations
+ Schema | Name | Type  | Owner
+--------+------+-------+-------
+ public | emp  | table | sam
+(1 row)
+
+
+->tables under specific schema:
+
+rambabu=# \dt test.*;
+       List of relations
+ Schema | Name | Type  | Owner
+--------+------+-------+-------
+ test   | emp  | table | sam
+(1 row)
+
+rambabu=# insert into test.emp values(1,'ram');
+INSERT 0 1
+rambabu=# insert into test.emp values(2,'sam'),(3,'bheem');
+INSERT 0 2
+rambabu=# insert into test.emp select * from test.emp;
+INSERT 0 3
+rambabu=# insert into test.emp(no,name) values(5,'jan');
+INSERT 0 1
+
+rambabu=# select * from test.emp;
+ no | name
+----+-------
+  1 | ram
+  2 | sam
+  3 | bheem
+  1 | ram
+  2 | sam
+  3 | bheem
+  5 | jan
+(7 rows)
+
+->view is a logical reprentation for table.
+
+->views under schema:
+
+rambabu=# create view test.emp_v as select * from test.emp;
+CREATE VIEW
+rambabu=#
+
+rambabu=# \dv test.*;
+       List of relations
+ Schema | Name  | Type | Owner
+--------+-------+------+-------
+ test   | emp_v | view | sam
+(1 row)
+
+rambabu=# \d+ test.emp_v;
+                                  View "test.emp_v"
+ Column |       Type        | Collation | Nullable | Default | Storage  | Description
+--------+-------------------+-----------+----------+---------+----------+-------------
+ no     | integer           |           |          |         | plain    |
+ name   | character varying |           |          |         | extended |
+View definition:
+ SELECT emp.no,
+    emp.name
+   FROM test.emp;
+
+
+->list of functions:
+
+rambabu=# \df test.*
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type
+--------+------+------------------+---------------------+------
+(0 rows)
+
+
+->list of sequences:
+
+rambabu=# \ds test.*;
+Did not find any relation named "test.*".
+
+->list of materialized views:
+
+rambabu=# \dm test.*;
+Did not find any relation named "test.*".
+rambabu=#
+
+
+list of tablespaces:
+
+rambabu=# \db
+       List of tablespaces
+    Name    |  Owner   | Location
+------------+----------+----------
+ pg_default | postgres |
+ pg_global  | postgres |
+(2 rows)
+
+tablesize:
+
+rambabu=# \dt+ test.emp
+                         List of relations
+ Schema | Name | Type  | Owner | Persistence | Size  | Description
+--------+------+-------+-------+-------------+-------+-------------
+ test   | emp  | table | sam   | permanent   | 16 kB |
+(1 row)
+
+
+change ownership:
+
+rambabu=# alter database rambabu OWNER TO sam;
+ALTER DATABASE
+rambabu=# \l+ rambabu
+                                                List of databases
+  Name   | Owner | Encoding |   Collate   |    Ctype    | Access privileges |  Size   | Tablespace | Description
+---------+-------+----------+-------------+-------------+-------------------+---------+------------+-------------
+ rambabu | sam   | UTF8     | en_US.UTF-8 | en_US.UTF-8 |                   | 7917 kB | pg_default |
+
+rambabu=# \dn
+  List of schemas
+  Name  |  Owner
+--------+----------
+ public | postgres
+ test   | sam
+
+rename objects:
+
+postgres=# alter database rambabu rename to newdb;
+ALTER DATABASE
+postgres=# \l
+                                  List of databases
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges
+-----------+----------+----------+-------------+-------------+-----------------------
+ newdb     | sam      | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+
+
+newdb=# alter schema test rename to schema1;
+ALTER SCHEMA
+newdb=# \dn
+  List of schemas
+  Name   |  Owner
+---------+----------
+ public  | postgres
+ schema1 | sam
+
+---------------------------------------------
+enable Audit log
+---------------------------------------------
+->to track each and everything happening at database level.
+
+vi postgresql.conf
+
+log_destination = 'stderr' , csvlog(log will be created in the format of excel), syslog(erros and notifciations), and eventlog(shut doen,
+restart,reload)
+
+logging_collector = on  
+log_directory = 'log' (this directory will be created under DATA directory)
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_rotation_size = 10MB(every 1GB)
+log_min_duration_statement = 0(all entries) =-1 (disabled) ->we can add some numbers . that will represents milli seconds.
+log_connections = on
+log_disconnections = on
+log_line_prefix = '%a %u %d %h %p %t' 
+log_statement = 'all'  
+log_temp_files = 0 
+
+[postgres@node2 DATA]$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA restart
+
+[postgres@node2 DATA]$ ls -ltr
+
+[postgres@node2 DATA]$ cd log
+
+->normally we will keep first 3 days as it is.
+
+->3 to 30 days we will compress it.
+
+->30 days to 3months daily cleanup.
+
+====================================
+Hostbased Authentication
+====================================
+->to prevent or manage remote based and local connections.
+
+->by using pg_hba.conf file we are achiveing this.
+
+->this file will exists under DATA directory.
+
+
+# TYPE            DATABASE        USER            ADDRESS                 METHOD
+local/host
+
+TYPE : 
+------
+1.local : if you are trying to keep the entries for local conenction, type would be local, at the same time we no need to mention ip addresss
+
+in the ADDRESS column.
+
+2.host  : if server in one location, end users trying to connect from another location, we will call this connection as remote connection,
+
+in that case type would be host, in the place of ADDRESS column need to mention clinet ip.
+
+DATABASE: which database user wants to access, that database name need to mention.
+
+USER : Which user wants to access database, that usernam need to mention.
+
+ADDRESS : for local conenctions no need to mention any ip address, we can keep it as empty, bur for all remote connections need to mention
+
+clinet IP's.
+
+METHOD: the way you want allow conenction whether with password or without password.
+
+
+1.TRUST : if u want to allow any connection from user, without password.
+
+2.MD5:    if u want to allow any connection from user, password mandatory.
+
+3.REJECT : if u wany reject any connections blindly, we will use this method.
+
+4.scram-sha-256 : if you want to use this method, server level we need to set this value, remianing mehtods no need to set anything.
+
+
+default example:
+
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+ local   all             all                                     trust
+
+-> if any end user trying to connect database, directly from database server, that connection will be local connections, all local
+
+connections all users, no need to enter password.
+
+->if you make any changes in pg_hba.conf file we need to reload postgresql instance services, then only new changes will reflect.
+
+->reload (refreshing configurations files and it will takes all the dynamic values) vs restart(stopping services &start services)
+
+
+databasename : newdb
+username     : sam
+
+if for your user/ip address/dataabse which u r trying to access nor present in pg_hba.conf file, it will not allow the connection.
+
+below are the error message.
+
+[postgres@node2 DATA]$ psql
+psql: error: FATAL:  no pg_hba.conf entry for host "[local]", user "postgres", database "postgres", SSL off
+
+scenorio1:
+========= 
+
+allow only user sam to database newdb with local ip, no need to enter password:
+
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+local    newdb           sam                                     trust
+
+[postgres@node2 DATA]$ pg_ctl reload
+server signaled
+
+[postgres@node2 DATA]$ psql -d newdb -U sam
+psql (13.3)
+Type "help" for help.
+
+newdb=# \c
+You are now connected to database "newdb" as user "sam".
+
+
+
+scenorio2:
+========= 
+
+allow only user sam to all databases with local ip, no need to enter password:
+
+local    all           sam                                     trust
+
+[postgres@node2 DATA]$ pg_ctl reload
+
+
+scenorio3:
+========= 
+
+allow only user sam to all databases with local ip, need to enter password:
+
+local    all           sam                                     md5
+
+[postgres@node2 DATA]$ pg_ctl reload
+server signaled
+
+[postgres@node2 DATA]$ psql -d postgres -U sam
+Password for user sam:
+psql: error: FATAL:  password authentication failed for user "sam"  (wrong password)
+
+scenorio4:
+========= 
+
+reject only user sam to all databases with local ip:
+
+local    all           sam                                     reject
+
+[postgres@node2 DATA]$ psql -d postgres -U sam
+psql: error: FATAL:  pg_hba.conf rejects connection for host "[local]", user "sam", database "postgres", SSL off
+[postgres@node2 DATA]$
+
+
+scenorio5:
+========= 
+allow all connection from sam with password from remote host:
+
+host     all           sam               127.0.0.1/32 (clinet ip)           md5
+
+
+[postgres@node2 DATA]$ psql -d postgres -U sam -h 127.0.0.1 (server ip)
+Password for user sam:
+psql (13.3)
+Type "help" for help.
+
+postgres=# \q
+
+scenorio6:
+========= 
+allow all connection from sam with password from remote hosts (1000's of remote hosts):
+
+host     all           sam               0.0.0.0/0 (clinet ip-allows all ip's)        md5
+
+
+scenorio7:
+===========
+i want to allow thousands of users, through all ip's need to allow connections.
+
+->we can achieve this through rolebased.
+
+local   all             +test                                   md5
+
+to allow remote connection in additon to pg_hba.conf entry, below also mandatory.
+
+in postgresql.conf file
+
+listen_addresses = '*'  (need to restart instance)
+
+make hostnames pingable:
+
+-bash-4.2$ cat /etc/hosts
+192.168.38.134 node3 node3
+
+==========================================================
+METADATA TABLES IN POSTGRESQL
+==========================================================
+->data about data we will call it as metadata.
+
+->by default we have public schema, in addition to this we have 2 hidden schema'.
+
+->i.e pg_catalog, information_schema, it will manages all meta data tables.
+
+->metadat tables/dictinory views :compared to tables , views are userfriendly, in table each and every field will be represented by oid.
+
+tables under pg_catalog:
+=======================
+postgres=# \dt pg_catalog.*;
+                    List of relations
+   Schema   |          Name           
+------------+-------------------------
+            
+ g_catalog | pg_class :list of tables with schemanames and oid's.
+
+postgres=# select oid,relname,relnamespace from pg_class;
+  oid  |                    relname                    | relnamespace
+-------+-----------------------------------------------+--------------
+  2619 | pg_statistic                                  |           11
+  1247 | pg_type                                       |           11
+  4159 | pg_toast_2600                                 |           99
+
+relfilenode : data filename
+reltablespace : which tablespace
+relpages      : how many pages occupied
+               
+ g_catalog | pg_constraint   :(chec,not null,unique,primary key,foregin key) : all constaints with oid's        
+ pg_catalog | pg_database: list of databases   
+
+postgres=# select oid,datname,datallowconn,datconnlimit,dattablespace from pg_database;
+  oid  |  datname  | datallowconn | datconnlimit | dattablespace
+-------+-----------+--------------+--------------+---------------
+ 13577 | postgres  | t            |           -1 |          1663
+     1 | template1 | t            |           -1 |          1663
+ 13576 | template0 | f            |           -1 |          1663
+ 16384 | newdb     | t            |           -1 |          1663
+(4 rows)
+         
+ pg_catalog | pg_db_role_setting   : user level parameter settings.
+
+postgres=# select * from pg_db_role_setting;
+ setdatabase | setrole |    setconfig
+-------------+---------+-----------------
+           0 |   16385 | {work_mem=10MB}
+(1 row)
+
+
+postgres=# alter user sam set work_mem='10MB';
+ALTER ROLE
+    
+ pg_catalog | pg_depend: list of dependent object list                
+ pg_catalog | pg_event_trigger: event as part of trigger.        
+ pg_catalog | pg_extension: in addition to s/w, we will get some additional features, we will call it as extensions. 
+
+postgres=# select * from pg_extension;
+  oid  | extname | extowner | extnamespace | extrelocatable | extversion | extconfig | extcondition
+-------+---------+----------+--------------+----------------+------------+-----------+--------------
+ 13563 | plpgsql |       10 |           11 | f              | 1.0        |           |
+(1 row)
+           
+ pg_catalog | pg_foreign_data_wrapper : list of foreign data wrappers
+ pg_catalog | pg_foreign_server :list of foreging servers      
+ pg_catalog | pg_foreign_table : list of tabels part of dblink       
+ pg_catalog | pg_user_mapping: it will display both source and target users.         
+
+above 4 tables giving information about db link.
+
+ pg_catalog | pg_index  : list of indexes              
+ pg_catalog | pg_inherits: is anywhere we are using inheritence or not.             
+ g_catalog | pg_largeobject : it will display list of lobs.          
+ pg_catalog | pg_largeobject_metadata : above lob's, metadata will be displayed.
+ pg_catalog | pg_namespace  : list of schema's with oid.
+
+postgres=# select * from pg_namespace where oid in(11,99);
+ oid |  nspname   | nspowner |               nspacl
+-----+------------+----------+------------------------------------
+  99 | pg_toast   |       10 |
+  11 | pg_catalog |       10 | {postgres=UC/postgres,=U/postgres}
+(2 rows)
+          
+ pg_catalog | pg_partitioned_table  : list of partitioned tables will display.  
+ pg_catalog | pg_policy: to achive row level securtiy, we need to create policy, it will display list of policies.
+
+ROW LEVEL SECURITY(RLS) : 
+               
+ pg_catalog | pg_proc : list of procedures and functions                
+ 
+ pg_catalog | pg_publication : list of publications          
+ pg_catalog | pg_publication_rel :tables part of publication     
+ pg_catalog | pg_subscription :list of subscription        
+ pg_catalog | pg_subscription_rel : tables part of subscriptison    
+ 
+all above 4 related to logical replication.
+
+ pg_catalog | pg_sequence  : list of sequences            
+ pg_catalog | pg_tablespace:list of tablespaces           
+ pg_catalog | pg_trigger: list of triggers
+
+
+metadata views under pg_catalog:
+================================
+postgres=# \dv pg_catalog.*;
+                       List of relations
+   Schema   |              Name               
+------------+---------------------------------
+ pg_catalog | pg_available_extension_versions : it will display all the extensions.
+ pg_catalog | pg_available_extensions   : list of extensions with less details.
+
+postgres=# select * from pg_available_extensions;
+        name        | default_version | installed_version |                                comment
+--------------------+-----------------+-------------------+------------------------------------------------------------------------
+ plpgsql            | 1.0             | 1.0               | PL/pgSQL procedural language
+      
+ pg_catalog | pg_config    : installation locations and configuration type.
+
+postgres=# select * from pg_config;
+       name        |                                                                                                    setting
+
+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
+ BINDIR            | /usr/local/pgsql/bin
+ DOCDIR            | /usr/local/pgsql/share/doc
+ HTMLDIR           | /usr/local/pgsql/share/doc
+ INCLUDEDIR        | /usr/local/pgsql/include
+ PKGINCLUDEDIR     | /usr/local/pgsql/include
+ INCLUDEDIR-SERVER | /usr/local/pgsql/include/server
+ LIBDIR            | /usr/local/pgsql/lib
+ PKGLIBDIR         | /usr/local/pgsql/lib
+ LOCALEDIR         | /usr/local/pgsql/share/locale
+ MANDIR            | /usr/local/pgsql/share/man
+ SHAREDIR          | /usr/local/pgsql/share
+ SYSCONFDIR        | /usr/local/pgsql/etc
+ PGXS              | /usr/local/pgsql/lib/pgxs/src/makefiles/pgxs.mk
+ CONFIGURE         |  '--without-readline' '--without-zlib'
+ CC                | gcc -std=gnu99
+ CPPFLAGS          | -D_GNU_SOURCE
+ CFLAGS            | -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wformat-
+security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -O2
+ CFLAGS_SL         | -fPIC
+ LDFLAGS           | -Wl,--as-needed -Wl,-rpath,'/usr/local/pgsql/lib',--enable-new-dtags
+ LDFLAGS_EX        |
+ LDFLAGS_SL        |
+ LIBS              | -lpgcommon -lpgport -lpthread -lrt -ldl -lm
+ VERSION           | PostgreSQL 13.3
+(23 rows)
+
+                    
+ pg_catalog | pg_cursors: list of cursors.
+                      
+ pg_catalog | pg_file_settings : it will display only un commented parameters from postgresql.conf file.
+
+postgres=# select * from pg_file_settings;
+             sourcefile              | sourceline | seqno |            name            |            setting             | applied | error
+-------------------------------------+------------+-------+----------------------------+--------------------------------+---------+-------
+ /var/lib/pgsql/DATA/postgresql.conf |         59 |     1 | listen_addresses           | *                              | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |         64 |     2 | max_connections            | 100                            | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        121 |     3 | shared_buffers             | 128MB                          | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        142 |     4 | dynamic_shared_memory_type | posix                          | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        228 |     5 | max_wal_size               | 1GB                            | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        229 |     6 | min_wal_size               | 80MB                           | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        425 |     7 | log_destination            | stderr                         | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        431 |     8 | logging_collector          | on                             | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        437 |     9 | log_directory              | log                            | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        439 |    10 | log_filename               | postgresql-%Y-%m-%d_%H%M%S.log | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        451 |    11 | log_rotation_age           | 1d                             | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        453 |    12 | log_rotation_size          | 10MB                           | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        497 |    13 | log_min_duration_statement | 0                              | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        524 |    14 | log_connections            | on                             | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        525 |    15 | log_disconnections         | on                             | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        529 |    16 | log_line_prefix            | %a %u %d %h %p %t              | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        558 |    17 | log_statement              | all                            | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        560 |    18 | log_temp_files             | 0                              | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        563 |    19 | log_timezone               | America/Los_Angeles            | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        678 |    20 | datestyle                  | iso, mdy                       | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        680 |    21 | timezone                   | America/Los_Angeles            | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        694 |    22 | lc_messages                | en_US.UTF-8                    | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        696 |    23 | lc_monetary                | en_US.UTF-8                    | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        697 |    24 | lc_numeric                 | en_US.UTF-8                    | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        698 |    25 | lc_time                    | en_US.UTF-8                    | t       |
+ /var/lib/pgsql/DATA/postgresql.conf |        701 |    26 | default_text_search_config | pg_catalog.english             | t       |
+(26 rows)
+         
+role: it will have set previleges, we can grant role to any user.
+group :it will have set of preveleges, we can assgin any user to this group.
+
+->in postgresql user and group both are same, only user can login, role can't login, if required we can convert role to user, user to role.
+      
+ pg_catalog | pg_group  : only roles it will display
+
+postgres=# select * from pg_group;
+          groname          | grosysid | grolist
+---------------------------+----------+---------
+ pg_monitor                |     3373 | {}
+ pg_read_all_settings      |     3374 | {3373}
+ pg_read_all_stats         |     3375 | {3373}
+ pg_stat_scan_tables       |     3377 | {3373}
+ pg_read_server_files      |     4569 | {}
+ pg_write_server_files     |     4570 | {}
+ pg_execute_server_program |     4571 | {}
+ pg_signal_backend         |     4200 | {}
+(8 rows)
+
+
+ pg_catalog | pg_shadow:    users with passwords it will display.
+
+postgres=# select * from pg_shadow;
+ usename  | usesysid | usecreatedb | usesuper | userepl | usebypassrls |               passwd                |        valuntil        |    useconfig
+----------+----------+-------------+----------+---------+--------------+-------------------------------------+------------------------+-----------------
+ postgres |       10 | t           | t        | t       | t            |                                     |                        |
+ sam      |    16385 | t           | t        | f       | f            | md5eadd934e2cc978fc622fc1324878d8af | 2021-07-10 00:00:00-07 | {work_mem=10MB}
+ test     |    16403 | f           | f        | f       | f            |                                     |                        |
+ u1       |    16404 | f           | f        | f       | f            | md58026a39c502750413402a90d9d8bae3c |                        |
+ u2       |    16405 | f           | f        | f       | f            | md5a76d8c8015643c6a837661a10142016e |                        |
+ u3       |    16406 | f           | f        | f       | f            | md5dad1ef51b879799793dc38d714b97063 |                        |
+ u4       |    16407 | f           | f        | f       | f            | md54af10c3137cf79c12265e8d288070711 |                        |
+ u5       |    16408 | f           | f        | f       | f            | md507a832ae72c9e818c5297f366284fb8a |                        |
+(8 rows)
+                   
+ pg_catalog | pg_roles:  it will display users + list of hidden roles.
+
+postgres=# select rolname from pg_roles;
+          rolname
+---------------------------
+ postgres
+ pg_monitor : it will give monitoring preveleges
+ pg_read_all_settings : waht are the parameters and its values we can read it.
+ pg_read_all_stats : all stats related information
+ pg_stat_scan_tables: for scanning all tables
+ pg_read_server_files : user can read confirguration files
+ pg_write_server_files: users can modify by using alter system set command.
+ pg_execute_server_program: 
+ pg_signal_backend :user can cancel the sessions.
+
+ sam
+ test
+ u1
+ u2
+ u3
+ u4
+ u5
+(16 rows)
+                     
+ pg_catalog | pg_user :  list of users, equal to \du.
+
+postgres=# select * from pg_user;
+ usename  | usesysid | usecreatedb | usesuper | userepl | usebypassrls |  passwd  |        valuntil        |    useconfig
+----------+----------+-------------+----------+---------+--------------+----------+------------------------+-----------------
+ postgres |       10 | t           | t        | t       | t            | ******** |                        |
+ sam      |    16385 | t           | t        | f       | f            | ******** | 2021-07-10 00:00:00-07 | {work_mem=10MB}
+ test     |    16403 | f           | f        | f       | f            | ******** |                        |
+ u1       |    16404 | f           | f        | f       | f            | ******** |                        |
+ u2       |    16405 | f           | f        | f       | f            | ******** |                        |
+ u3       |    16406 | f           | f        | f       | f            | ******** |                        |
+ u4       |    16407 | f           | f        | f       | f            | ******** |                        |
+ u5       |    16408 | f           | f        | f       | f            | ******** |                        |
+                      
+
+
+                      
+ pg_catalog | pg_hba_file_rules   : display pg_hba.conf file
+
+postgres=# select * from pg_hba_file_rules;
+ line_number | type  |   database    | user_name |  address  |                 netmask                 | auth_method | options | error
+-------------+-------+---------------+-----------+-----------+-----------------------------------------+-------------+---------+-------
+          90 | local | {all}         | {+test}   |           |                                         | md5         |         |
+          91 | local | {all}         | {all}     |           |                                         | trust       |         |
+          92 | host  | {newdb}       | {sam}     | 0.0.0.0   | 0.0.0.0                                 | md5         |         |
+          96 | host  | {all}         | {all}     | ::1       | ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff | trust       |         |
+          99 | local | {replication} | {all}     |           |                                         | trust       |         |
+         100 | host  | {replication} | {all}     | 127.0.0.1 | 255.255.255.255                         | trust       |         |
+         101 | host  | {replication} | {all}     | ::1       | ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff | trust       |         |
+(7 rows)
+
+ pg_catalog | pg_stat_all_tables : system created + user create tables              
+ pg_catalog | pg_stat_sys_tables :only system created tables             
+ pg_catalog | pg_stat_user_tables:only user created tables  
+
+postgres=# select relid,schemaname,relname,n_tup_ins,n_tup_upd,n_tup_del from pg_stat_user_tables;
+ relid | schemaname | relname | n_tup_ins | n_tup_upd | n_tup_del
+-------+------------+---------+-----------+-----------+-----------
+ 16410 | test       | emp     |         3 |         0 |         3
+(1 row)
+
+
+above 3 tables will display stats.
+           
+ pg_catalog | pg_tables : list of tables with attributes.
+
+postgres=# select * from pg_tables limit 1;
+ schemaname |  tablename   | tableowner | tablespace | hasindexes | hasrules | hastriggers | rowsecurity
+------------+--------------+------------+------------+------------+----------+-------------+-------------
+ pg_catalog | pg_statistic | postgres   |            | t          | f        | f           | f
+(1 row)
+
+                      
+            
+ pg_catalog | pg_indexes :all indexes
+ pg_catalog | pg_stat_all_indexes: system + user created             
+ pg_catalog | pg_stat_sys_indexes  :system created           
+ pg_catalog | pg_stat_user_indexes :user craeted indexes           
+
+indexes to increase the perfromance.
+
+postgres=# create index ram_idx on test.emp(no);
+CREATE INDEX
+postgres=# \d test.emp
+                      Table "test.emp"
+ Column |       Type        | Collation | Nullable | Default
+--------+-------------------+-----------+----------+---------
+ no     | integer           |           |          |
+ name   | character varying |           |          |
+Indexes:
+    "ram_idx" btree (no)
+
+postgres=# select * from pg_stat_user_indexes;
+ relid | indexrelid | schemaname | relname | indexrelname | idx_scan | idx_tup_read | idx_tup_fetch
+-------+------------+------------+---------+--------------+----------+--------------+---------------
+ 16410 |      16416 | test       | emp     | ram_idx      |        0 |            0 |             0
+(1 row)
+
+ 
+ pg_catalog | pg_locks :it will display all blocking and blocked session details.
+
+ pg_catalog | pg_views  : list of views      
+
+postgres=# insert into test.emp values(1,'ram'),(2,'sam'),(3,'jan');
+INSERT 0 3
+postgres=# select * from test.emp;
+ no | name
+----+------
+  1 | ram
+  2 | sam
+  3 | jan
+(3 rows)
+
+postgres=# \dt+ test.emp;
+                          List of relations
+ Schema | Name | Type  |  Owner   | Persistence | Size  | Description
+--------+------+-------+----------+-------------+-------+-------------
+ test   | emp  | table | postgres | permanent   | 16 kB |
+(1 row)
+
+postgres=# create view test.emp_v as select * from test.emp;
+CREATE VIEW
+postgres=# \dv test.*;
+        List of relations
+ Schema | Name  | Type |  Owner
+--------+-------+------+----------
+ test   | emp_v | view | postgres
+(1 row)
+
+postgres=# select * from test.emp_v;
+ no | name
+----+------
+  1 | ram
+  2 | sam
+  3 | jan
+(3 rows)
+
+postgres=# select * from pg_views where schemaname not in('pg_catalog','information_schema');
+ schemaname | viewname | viewowner |    definition
+------------+----------+-----------+-------------------
+ test       | emp_v    | postgres  |  SELECT emp.no,  +
+            |          |           |     emp.name     +
+            |          |           |    FROM test.emp;
+(1 row)
+
+->view will never occupy any space.
+->always depends upon table
+->auto refresh will works
+
+                
+ pg_catalog | pg_matviews  ->it will display list of materialized cciews.
+
+->it will get the data from table same as view, only difference is it will occupy space same as table.
+->auto refresh will not work.
+
+postgres=# select * from test.emp;
+ no | name
+----+------
+  1 | ram
+  2 | sam
+  3 | jan
+(3 rows)
+
+postgres=# select * from test.emp_v;
+ no | name
+----+------
+  1 | ram
+  2 | sam
+  3 | jan
+(3 rows)
+
+
+
+postgres=# create materialized view  test.emp_mv as select * from test.emp;
+SELECT 3
+postgres=# \dm test.*;
+               List of relations
+ Schema |  Name  |       Type        |  Owner
+--------+--------+-------------------+----------
+ test   | emp_mv | materialized view | postgres
+(1 row)
+
+postgres=# select * from test.emp_mv;
+ no | name
+----+------
+  1 | ram
+  2 | sam
+  3 | jan
+(3 rows)
+
+postgres=# refresh materialized view test.emp_mv;
+REFRESH MATERIALIZED VIEW
+postgres=# select * from test.emp_mv;
+ no | name
+----+------
+(0 rows)
+                   
+ pg_catalog | pg_policies :list of policies, policy to achive row level secuirty.
+                    
+ pg_catalog | pg_publication_tables : list of tables part of publication          
+ pg_catalog | pg_stat_subscription:list of subscriptions            
+
+ pg_catalog | pg_replication_slots :list of replication slots           
+ pg_catalog | pg_sequences:list of sequences    
+
+postgres=# create sequence ram_s as int INCREMENT 1 MINVALUE 1 START 1;
+CREATE SEQUENCE
+postgres=# \ds
+          List of relations
+ Schema | Name  |   Type   |  Owner
+--------+-------+----------+----------
+ public | ram_s | sequence | postgres
+(1 row)
+
+postgres=# select nextval('ram_s');
+ nextval
+---------
+       1
+(1 row)
+                
+ pg_catalog | pg_settings: each and every parameters and its values will be disaplyed here.
+                  
+postgres=# select name,setting from pg_settings;
+                  name                  |               setting
+----------------------------------------+-------------------------------------
+ allow_system_table_mods                | off
+ application_name                       | psql
+ archive_cleanup_command                |
+ archive_command                        | (disabled)
+
+
+ pg_catalog | pg_shmem_allocations : this one will display run time shared buffers utilization.
+         
+ pg_catalog | pg_stat_activity :it will display all monitoring details.
+
+postgres=# select datname,pid,usename,application_name,client_hostname,query_start,state,query from pg_stat_activity;
+ datname  | pid  | usename  | application_name | client_hostname |          query_start          | state  |
+ query
+----------+------+----------+------------------+-----------------+-------------------------------+--------+--------------------------------------------------
+----------------------------------------------------------
+          | 1390 | postgres |                  |                 |                               |        |
+          | 1388 |          |                  |                 |                               |        |
+ postgres | 2605 | postgres | psql             |                 | 2021-06-08 18:42:17.663424-07 | active | select datname,pid,usename,application_name,clien
+t_hostname,query_start,state,query from pg_stat_activity;
+          | 1386 |          |                  |                 |                               |        |
+          | 1385 |          |                  |                 |                               |        |
+          | 1387 |          |                  |                 |                               |        |
+(6 rows)
+
+               
+ pg_catalog | pg_stat_archiver : archive files information if u enabled archive mode.
+
+postgres=# select * from pg_stat_archiver;
+ archived_count | last_archived_wal | last_archived_time | failed_count | last_failed_wal | last_failed_time |          stats_reset
+----------------+-------------------+--------------------+--------------+-----------------+------------------+-------------------------------
+              0 |                   |                    |            0 |                 |                  | 2021-06-04 18:45:19.697637-07
+(1 row)
+
+ pg_catalog | pg_stat_database  : databses details.
+
+postgres=# select datid,datname,numbackends,conflicts,temp_files,deadlocks from pg_stat_database;
+ datid |  datname  | numbackends | conflicts | temp_files | deadlocks
+-------+-----------+-------------+-----------+------------+-----------
+     0 |           |           0 |         0 |          0 |         0
+ 13577 | postgres  |           1 |         0 |          0 |         0
+     1 | template1 |           0 |         0 |          0 |         0
+ 13576 | template0 |           0 |         0 |          0 |         0
+ 16384 | newdb     |           0 |         0 |          0 |         0
+(5 rows)
+             
+ pg_catalog | pg_stat_database_conflicts  : database conflicts
+    
+ pg_catalog | pg_stat_progress_analyze  : analyze progress        
+ pg_catalog | pg_stat_progress_basebackup :baseabckup progress    
+ pg_catalog | pg_stat_progress_cluster :       
+ pg_catalog | pg_stat_progress_create_index: index creation progress   
+ pg_catalog | pg_stat_progress_vacuum : vaccum progress        
+
+ pg_catalog | pg_stat_replication : all the replication related details             
+ pg_catalog | pg_stat_user_functions: only user created tables it will dsiplay          
+ pg_catalog | pg_user_mappings   : during db link will use.             
+
+for password securtiy and encryption now a days we are using scram-sha-256 method.
+
+it will save data from hacking.
+
+how to convert md5 to scram-sha-256.
+
+vi postgresql.conf
+
+password_encryption = scram-sha-256 
+
+vi pg_hba.conf 
+
+update md5 as scram-sha-256 
+
+then reset password, then encryption will be updated scram-sha-256 .
+
+postgres=# select usename,passwd from pg_shadow;
+ usename  |                                                                passwd
+----------+---------------------------------------------------------------------------------------------------------------------------------------
+ postgres |
+ sam      | md5eadd934e2cc978fc622fc1324878d8af
+ u2       | md5a76d8c8015643c6a837661a10142016e
+ u3       | md5dad1ef51b879799793dc38d714b97063
+ u4       | md54af10c3137cf79c12265e8d288070711
+ u5       | md507a832ae72c9e818c5297f366284fb8a
+ test     | md505a671c66aefea124cc08b76ea6d30bb
+ u1       | SCRAM-SHA-256$4096:PTzDIevu73XZrj2OiBIDuA==$af2L81VOsvjXjGf9iJ0nMpB7wnwa6gBn6iOjTFoKkgg=:NyfMGx48JLh4xb8dfLfcCs8M3FNoYnxAQoOWTRJBX2U=
+(8 rows)
+
+postgres=# show password_encryption;
+ password_encryption
+---------------------
+ scram-sha-256
+(1 row)
+
+******************************************************
+user access management
+******************************************************
+security level in postgresql:
+
+->database level access mamanagement/hostbased authentication
+
+->schema level access
+
+->object level access
+
+->for any object we need to provide access both the levels. schema level just like entry pass, object level access like participation pass.
+
+->under database or schema owner can create/drop/alter by default.
+
+db level permission to create schema:
+
+postgres=# grant create on database gayathri to ravi;
+GRANT
+
+postgres=# grant connect on database gayathri to ravi;
+GRANT
+
+
+postgres=# grant ALL on database gayathri to ravi;
+GRANT
+postgres=# \l+ gayathri
+                                                    List of databases
+   Name   |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges   |  Size   | Tablespace | Description
+----------+----------+----------+-------------+-------------+-----------------------+---------+------------+-------------
+ gayathri | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =Tc/postgres         +| 7885 kB | pg_default |
+          |          |          |             |             | postgres=CTc/postgres+|         |            |
+          |          |          |             |             | ravi=CTc/postgres     |         |            |
+(1 row)
+
+
+gayathri=# \dn
+  List of schemas
+  Name  |  Owner
+--------+----------
+ public | postgres
+ test   | postgres
+(2 rows)
+
+gayathri=# create table test.emp(no int);
+CREATE TABLE
+gayathri=# \dt test.*;
+        List of relations
+ Schema | Name | Type  |  Owner
+--------+------+-------+----------
+ test   | emp  | table | postgres
+(1 row)
+
+[postgres@node2 ~]$ psql -U ravi -d gayathri
+psql (13.3)
+Type "help" for help.
+
+gayathri=> \dn
+  List of schemas
+  Name  |  Owner
+--------+----------
+ public | postgres
+ test   | postgres
+(2 rows)
+
+gayathri=> \dt test.*;
+        List of relations
+ Schema | Name | Type  |  Owner
+--------+------+-------+----------
+ test   | emp  | table | postgres
+(1 row)
+
+gayathri=> select * from test.emp;
+ERROR:  permission denied for schema test
+LINE 1: select * from test.emp;
+
+schema level we have 2 privileges:
+===================================
+1.USAGE: if you give usage again underlying privileges for tables we need to provide explictely.
+
+gayathri=# grant usage on schema test to ravi;
+GRANT
+gayathri=# \dn+ test
+                   List of schemas
+ Name |  Owner   |  Access privileges   | Description
+------+----------+----------------------+-------------
+ test | postgres | postgres=UC/postgres+|
+      |          | ravi=U/postgres      |
+(1 row)
+
+gayathri=> select * from test.emp;
+ERROR:  permission denied for table emp
+
+[postgres@node2 ~]$ psql -d gayathri
+psql (13.3)
+Type "help" for help.
+
+gayathri=# grant select,insert,delete,update on test.emp to ravi; (direct level access rights)
+GRANT
+
+[postgres@node2 ~]$ psql -U ravi -d gayathri
+psql (13.3)
+Type "help" for help.
+
+gayathri=> select * from test.emp;
+ no
+----
+(0 rows)
+
+gayathri=> insert into test.emp values(1),(2);
+INSERT 0 2
+gayathri=> delete from test.emp;
+DELETE 2
+
+
+gayathri=# grant all on schema test to ravi;
+GRANT
+gayathri=# \dn+ test
+                   List of schemas
+ Name |  Owner   |  Access privileges   | Description
+------+----------+----------------------+-------------
+ test | postgres | postgres=UC/postgres+|
+      |          | ravi=UC/postgres     |
+(1 row)
+
+
+if we give all user can create new tables under the schema , for existing tables we need to provide access seperately.
+
+if any user want to create object under schema he need CREATE or ALL privilege on schema.
+
+->above we have given permission dirctly on schema and tables.
+
+->if i have 10000 tables, i can use all option.
+
+gayathri=# grant select,insert,update,delete on all tables in schema test to ravi;
+GRANT
+gayathri=#
+
+
+->if 100 new users expecting same features as ravi user, in this case we will proceed with role based access rights.
+
+postgres=# grant ravi to u1;
+GRANT ROLE
+postgres=# grant ravi to u2;
+GRANT ROLE
+postgres=# grant ravi to u3;
+GRANT ROLE
+postgres=# grant ravi to u4;
+GRANT ROLE
+postgres=# grant ravi to u5;
+GRANT ROLE
+postgres=# \du
+                                    List of roles
+ Role name |                         Attributes                         |  Member of
+-----------+------------------------------------------------------------+-------------
+ postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
+ rambabu   |                                                            | {}
+ ravi      |                                                            | {}
+ sam       | Superuser, Create role, Create DB                         +| {}
+           | 10 connections                                            +|
+           | Password valid until 2021-07-10 00:00:00-07                |
+ satish    |                                                            | {}
+ test      |                                                            | {}
+ u1        |                                                            | {test,ravi}
+ u2        |                                                            | {test,ravi}
+ u3        |                                                            | {test,ravi}
+ u4        |                                                            | {test,ravi}
+ u5        |                                                            | {test,ravi}
+
+
+2.ALL: user can create objects under schema.
+
+
+->for newly creating tables these permissions not applicable. by default if you want to apply that permission we need to use 
+
+ALTER DEFAULT PRIVILEGES option.
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA test grant select,insert,delete,update ON TABLES TO ravi;
+
+if u want to drop any user, if it is having dependency need to follow below steps.
+
+gayathri=# reassign owned by ravi to postgres;
+REASSIGN OWNED
+gayathri=# drop owned by ravi;
+DROP OWNED
+gayathri=# drop user ravi;
+DROP ROLE
+
+     
+pg_catalog | pg_auth_members   : it will display user and assigned role.
+
+gayathri=# select * from pg_auth_members;
+ roleid | member | grantor | admin_option
+--------+--------+---------+--------------
+   3374 |   3373 |      10 | f
+   3375 |   3373 |      10 | f
+   3377 |   3373 |      10 | f
+  16403 |  16404 |      10 | f
+  16403 |  16405 |      10 | f
+  16403 |  16406 |      10 | f
+  16403 |  16407 |      10 | f
+  16403 |  16408 |      10 | f
+       
+pg_catalog | pg_authid : users and roles , just like \du
+
+*********************************************************
+views under information_schema
+*********************************************************
+gayathri=# \dv information_schema.*;
+                              List of relations
+       Schema       |                 Name                  
+--------------------+---------------------------------------
+ information_schema | _pg_foreign_data_wrappers             
+ information_schema | _pg_foreign_servers                   
+ information_schema | _pg_foreign_table_columns             
+ information_schema | _pg_foreign_tables                    
+ information_schema | _pg_user_mappings                     
+ information_schema | foreign_data_wrapper_options          
+ information_schema | foreign_data_wrappers                 
+ information_schema | foreign_server_options                
+ information_schema | foreign_servers                       
+ information_schema | foreign_table_options                 
+ information_schema | foreign_tables                        
+ information_schema | user_mapping_options                  
+ information_schema | user_mappings                         
+
+all above related to dblink.
+
+ information_schema | administrable_role_authorizations     : roles with admin privilege.
+
+gayathri=# grant sam to u1 with admin option;
+GRANT ROLE
+gayathri=# select * from information_schema.administrable_role_authorizations;
+ grantee | role_name | is_grantable
+---------+-----------+--------------
+ u1      | sam       | YES
+(1 row)
+
+ information_schema | applicable_roles  : users and assigned roles.
+
+gayathri=# select * from information_schema.applicable_roles;
+  grantee   |      role_name       | is_grantable
+------------+----------------------+--------------
+ pg_monitor | pg_read_all_settings | NO
+ pg_monitor | pg_read_all_stats    | NO
+ pg_monitor | pg_stat_scan_tables  | NO
+ u1         | sam                  | YES
+ u5         | test                 | NO
+ u4         | test                 | NO
+ u3         | test                 | NO
+ u2         | test                 | NO
+ u1         | test                 | NO
+                    
+ information_schema | check_constraints: list of check constraints.
+
+gayathri=# create table test.chktest(no int,check(no<5),name varchar);
+CREATE TABLE
+gayathri=# \d test.chktest
+                    Table "test.chktest"
+ Column |       Type        | Collation | Nullable | Default
+--------+-------------------+-----------+----------+---------
+ no     | integer           |           |          |
+ name   | character varying |           |          |
+Check constraints:
+    "chktest_no_check" CHECK (no < 5)
+
+gayathri=# insert into test.chktest values(6,'ram');
+ERROR:  new row for relation "chktest" violates check constraint "chktest_no_check"
+DETAIL:  Failing row contains (6, ram).
+gayathri=# insert into test.chktest values(4,'ram');
+INSERT 0 1
+gayathri=# select * from information_schema.check_constraints where constraint_schema in('test','public');
+ constraint_catalog | constraint_schema | constraint_name  | check_clause
+--------------------+-------------------+------------------+--------------
+ gayathri           | test              | chktest_no_check | ((no < 5))
+(1 row)
+
+gayathri=#
+
+ information_schema | table_constraints   : all cosntraints
+
+gayathri=# select * from information_schema.table_constraints where constraint_schema in('test','public');
+ constraint_catalog | constraint_schema |    constraint_name     | table_catalog | table_schema | table_name | constraint_type | is_deferrable | initially_de
+ferred | enforced
+--------------------+-------------------+------------------------+---------------+--------------+------------+-----------------+---------------+-------------
+-------+----------
+ gayathri           | test              | chktest_no_check       | gayathri      | test         | chktest    | CHECK           | NO            | NO
+       | YES
+ gayathri           | test              | t1_pkey                | gayathri      | test         | t1         | PRIMARY KEY     | NO            | NO
+       | YES
+ gayathri           | test              | t3_no_key              | gayathri      | test         | t3         | UNIQUE          | NO            | NO
+       | YES
+ gayathri           | test              | t4_no_fkey             | gayathri      | test         | t4         | FOREIGN KEY     | NO            | NO
+       | YES
+ gayathri           | test              | 16440_16469_1_not_null | gayathri      | test         | t2         | CHECK           | NO            | NO
+       | YES
+ gayathri           | test              | 16440_16464_1_not_null | gayathri      | test         | t1         | CHECK           | NO            | NO
+       | YES
+(6 rows)
+
+
+
+gayathri=# create table test.t1(no int primary key);
+CREATE TABLE
+
+gayathri=# create table test.t2(no int not null);
+CREATE TABLE
+
+gayathri=# create table test.t3(no int unique);
+CREATE TABLE
+                                    ^
+gayathri=#  create table test.t4(no int references test.t1(no));
+CREATE TABLE
+                   
+ information_schema | key_column_usage   : pk,fk,uq
+
+gayathri=# select * from information_schema.key_column_usage where constraint_schema in('test','public');
+ constraint_catalog | constraint_schema | constraint_name | table_catalog | table_schema | table_name | column_name | ordinal_position | position_in_unique_c
+onstraint
+--------------------+-------------------+-----------------+---------------+--------------+------------+-------------+------------------+---------------------
+----------
+ gayathri           | test              | t1_pkey         | gayathri      | test         | t1         | no          |                1 |
+
+ gayathri           | test              | t3_no_key       | gayathri      | test         | t3         | no          |                1 |
+
+ gayathri           | test              | t4_no_fkey      | gayathri      | test         | t4         | no          |                1 |
+        1
+(3 rows)
+
+gayathri=#
+                   
+ information_schema | referential_constraints   : only fk details
+
+gayathri=# select * from information_schema.referential_constraints where constraint_schema in('test','public');
+ constraint_catalog | constraint_schema | constraint_name | unique_constraint_catalog | unique_constraint_schema | unique_constraint_name | match_option | up
+date_rule | delete_rule
+--------------------+-------------------+-----------------+---------------------------+--------------------------+------------------------+--------------+---
+----------+-------------
+ gayathri           | test              | t4_no_fkey      | gayathri                  | test                     | t1_pkey                | NONE         | NO
+ ACTION   | NO ACTION
+(1 row)
+
+gayathri=#
+            
+ information_schema | constraint_column_usage   : tables with columns
+
+gayathri=# select * from information_schema.constraint_column_usage where constraint_schema in('test','public');
+ table_catalog | table_schema | table_name | column_name | constraint_catalog | constraint_schema | constraint_name
+---------------+--------------+------------+-------------+--------------------+-------------------+------------------
+ gayathri      | test         | chktest    | no          | gayathri           | test              | chktest_no_check
+ gayathri      | test         | t1         | no          | gayathri           | test              | t1_pkey
+ gayathri      | test         | t3         | no          | gayathri           | test              | t3_no_key
+ gayathri      | test         | t1         | no          | gayathri           | test              | t4_no_fkey
+(4 rows)
+
+            
+ information_schema | constraint_table_usage   : tables with constraints
+
+gayathri=# select * from information_schema.constraint_table_usage where constraint_schema in('test','public');
+ table_catalog | table_schema | table_name | constraint_catalog | constraint_schema | constraint_name
+---------------+--------------+------------+--------------------+-------------------+-----------------
+ gayathri      | test         | t1         | gayathri           | test              | t1_pkey
+ gayathri      | test         | t3         | gayathri           | test              | t3_no_key
+ gayathri      | test         | t1         | gayathri           | test              | t4_no_fkey
+(3 rows)
+             
+                                          
+ information_schema | columns  : list of columns                             
+ information_schema | enabled_roles: all roles            
+ information_schema | information_schema_catalog_name   : current conencting db name    
+ 
+ information_schema | role_column_grants                    
+ information_schema | role_table_grants                     
+ information_schema | role_usage_grants                     
+ information_schema | table_privileges   : which user,which table, which privilege.
+
+gayathri=# select * from information_schema.table_privileges where grantee='ravi';
+ grantor  | grantee | table_catalog | table_schema | table_name | privilege_type | is_grantable | with_hierarchy
+----------+---------+---------------+--------------+------------+----------------+--------------+----------------
+ postgres | ravi    | gayathri      | test         | emp        | INSERT         | NO           | NO
+ postgres | ravi    | gayathri      | test         | emp        | SELECT         | NO           | YES
+ postgres | ravi    | gayathri      | test         | emp        | UPDATE         | NO           | NO
+ postgres | ravi    | gayathri      | test         | emp        | DELETE         | NO           | NO
+ postgres | ravi    | gayathri      | test         | dept       | INSERT         | NO           | NO
+                   
+
+
+ 
+information_schema | sequences   : list of sequences                          
+ information_schema | tables  :list of tables                              
+ information_schema | triggered_update_columns : columns parts of trigger             
+ information_schema | triggers :list of triggers                             
+ information_schema | usage_privileges  :
+
+gayathri=# select * from information_schema.usage_privileges where grantee='ravi' and object_catalog='gayathri' and object_schema='test';
+ grantor | grantee | object_catalog | object_schema | object_name | object_type | privilege_type | is_grantable
+---------+---------+----------------+---------------+-------------+-------------+----------------+--------------
+(0 rows)
+                    
+ information_schema | view_column_usage: columns part of table which are part of view. 
+
+                    
+gayathri=# select * from information_schema.view_column_usage where view_name='t1_v';
+ view_catalog | view_schema | view_name | table_catalog | table_schema | table_name | column_name
+--------------+-------------+-----------+---------------+--------------+------------+-------------
+ gayathri     | test        | t1_v      | gayathri      | test         | t1         | name
+ gayathri     | test        | t1_v      | gayathri      | test         | t1         | no
+(2 rows)
+
+gayathri=#
+
+ information_schema | view_table_usage  : tables part of views :
+
+gayathri=# select * from information_schema.view_table_usage where view_name='t1_v';
+ view_catalog | view_schema | view_name | table_catalog | table_schema | table_name
+--------------+-------------+-----------+---------------+--------------+------------
+ gayathri     | test        | t1_v      | gayathri      | test         | t1
+(1 row)
+
+
+                   
+ information_schema | views : list of views   
+
+gayathri=# select table_schema,table_name,view_definition from information_schema.views where table_name='t1_v';
+ table_schema | table_name | view_definition
+--------------+------------+------------------
+ test         | t1_v       |  SELECT t1.no,  +
+              |            |     t1.name     +
+              |            |    FROM test.t1;
+(1 row)
+                                       
+**********************************************
+binaires/yum /rpm installation
+**********************************************
+
+[root@node2 ~]# wget https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+[root@node2 ~]# rpm -ivh pgdg-redhat-repo-latest.noarch.rpm
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:pgdg-redhat-repo-42.0-17.1       ################################# [100%]
+[root@node2 ~]#
+
+[root@node2 ~]# cd /etc/yum.repos.d/
+[root@node2 yum.repos.d]# ls -ltr
+total 24
+-rw-r--r--  1 root root 9503 May  5 21:51 pgdg-redhat-all.repo
+
+[root@node2 yum.repos.d]# yum install -y postgresql13-server
+
+Total download size: 7.2 M
+Installed size: 30 M
+Downloading packages:
+(1/3): postgresql13-libs-13.3-1PGDG.rhel7.x86_64.rpm                                                                                  | 380 kB  00:00:02
+(2/3): postgresql13-13.3-1PGDG.rhel7.x86_64.rpm                                                                                       | 1.4 MB  00:00:03
+(3/3): postgresql13-server-13.3-1PGDG.rhel7.x86_64.rpm                                                                                | 5.4 MB  00:00:03
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                        1.2 MB/s | 7.2 MB  00:00:06
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+Warning: RPMDB altered outside of yum.
+** Found 13 pre-existing rpmdb problem(s), 'yum check' output follows:
+2:container-selinux-2.107-3.el7.noarch has missing requires of selinux-policy >= ('0', '3.13.1', '216.el7')
+containerd.io-1.2.6-3.3.el7.x86_64 has installed conflicts containerd: containerd.io-1.2.6-3.3.el7.x86_64
+containerd.io-1.2.6-3.3.el7.x86_64 has installed conflicts runc: containerd.io-1.2.6-3.3.el7.x86_64
+3:docker-ce-18.09.0-3.el7.x86_64 has missing requires of libseccomp.so.2()(64bit)
+jre1.8-1.8.0_231-fcs.x86_64 is a duplicate with jre1.8-1.8.0_202-fcs.x86_64
+libXmu-1.1.2-2.el7.x86_64 has missing requires of libXt.so.6()(64bit)
+libXmu-devel-1.1.2-2.el7.x86_64 has missing requires of pkgconfig(x11)
+libXmu-devel-1.1.2-2.el7.x86_64 has missing requires of pkgconfig(xext)
+libXmu-devel-1.1.2-2.el7.x86_64 has missing requires of pkgconfig(xproto)
+libXmu-devel-1.1.2-2.el7.x86_64 has missing requires of pkgconfig(xt)
+readline-devel-4.3-5.i386 has missing requires of readline = ('0', '4.3', None)
+repmgr12-5.1.0-1.rhel7.x86_64 has missing requires of libpq.so.5()(64bit)
+repmgr12-5.1.0-1.rhel7.x86_64 has missing requires of postgresql12-server
+  Installing : postgresql13-libs-13.3-1PGDG.rhel7.x86_64                                                                                                 1/3
+  Installing : postgresql13-13.3-1PGDG.rhel7.x86_64                                                                                                      2/3
+  Installing : postgresql13-server-13.3-1PGDG.rhel7.x86_64                                                                                               3/3
+  Verifying  : postgresql13-libs-13.3-1PGDG.rhel7.x86_64                                                                                                 1/3
+  Verifying  : postgresql13-server-13.3-1PGDG.rhel7.x86_64                                                                                               2/3
+  Verifying  : postgresql13-13.3-1PGDG.rhel7.x86_64                                                                                                      3/3
+
+Installed:
+  postgresql13-server.x86_64 0:13.3-1PGDG.rhel7
+
+Dependency Installed:
+  postgresql13.x86_64 0:13.3-1PGDG.rhel7                                     postgresql13-libs.x86_64 0:13.3-1PGDG.rhel7
+
+Complete!
+[root@node2 yum.repos.d]#
+
+[root@node2 bin]# /usr/pgsql-13/bin/postgresql-13-setup initdb
+Initializing database ... OK
+
+[root@node2 bin]# systemctl enable postgresql-13
+Created symlink from /etc/systemd/system/multi-user.target.wants/postgresql-13.service to /usr/lib/systemd/system/postgresql-13.service.
+[root@node2 bin]# systemctl start postgresql-13
+[root@node2 bin]# systemctl status postgresql-13
+
+uninstall this s/w:
+
+
+[root@node2 bin]# yum remove -y postgresql13-server
+
+[root@node2 bin]# yum remove -y postgresql13
+
+[root@node2 bin]# rpm -qa|grep postgres
+postgresql13-libs-13.3-1PGDG.rhel7.x86_64
+[root@node2 bin]#
+[root@node2 bin]#
+[root@node2 bin]# rpm -e postgresql13-libs-13.3-1PGDG.rhel7.x86_64 --nodeps
+[root@node2 bin]#
+[root@node2 bin]# rpm -qa|grep postgres(search)
+
+[root@node2 pgsql]# rm -rf 13
+
+**********************************************************
+data export and import
+**********************************************************
+to export data from table to file,or to import data from file to table we have an utility called COPY.
+
+1.export data
+
+postgres=# copy emp to '/tmp/emp.txt';
+COPY 2
+postgres=# \q
+[postgres@node2 ~]$ cat /tmp/emp.txt
+1       ram
+2       sam
+
+
+2.import data form file to table
+
+postgres=# copy emp from '/tmp/emp.txt';
+COPY 2
+postgres=# select * from emp;
+ no | name
+----+------
+  1 | ram
+  2 | sam
+  1 | ram
+  2 | sam
+(4 rows)
+
+
+3.use seperator b/w columns
+
+postgres=# copy emp to '/tmp/emp.txt' with delimiter '|';
+COPY 4
+postgres=# \q
+[postgres@node2 ~]$ cat /tmp/emp.txt
+1|ram
+2|sam
+1|ram
+2|sam
+
+
+4.import with delimiter:
+
+postgres=# copy emp from '/tmp/emp.txt' with delimiter '|';
+COPY 4
+
+5.export data with header
+
+postgres=# copy emp to '/tmp/emp.txt' with header CSV;
+COPY 8
+
+[postgres@node2 ~]$ cat /tmp/emp.txt
+no,name
+1,ram
+2,sam
+1,ram
+2,sam
+
+6.export data for specific query
+
+postgres=# copy (select * from emp where no=1) to '/tmp/emp.txt';
+COPY 4
+postgres=# \q
+[postgres@node2 ~]$ cat /tmp/emp.txt
+1       ram
+1       ram
+1       ram
+1       ram
+
+************************************************
+PostgreSQL Physical Storage
+************************************************
+->our data by default will store under DATA directory.
+
+->under DATA directory, base directory will contains actual data
+
+->global directory will contains global objects.
+
+->tablespaces will represents this physiccal location, that means by default each and every object will point to 
+
+one default tablespace.
+
+->we have 2 tablespaces
+
+pg_default: $DATADIR/base
+
+pg_global: $DATADIR/global
+
+[postgres@node2 DATA]$ cd base/
+[postgres@node2 base]$ pwd
+/var/lib/pgsql/DATA/base
+[postgres@node2 base]$ ls -ltr
+total 48
+drwx------ 2 postgres postgres 8192 Jun 10 18:35 16438
+drwx------ 2 postgres postgres 8192 Jun 10 18:35 13577
+drwx------ 2 postgres postgres 8192 Jun 10 18:36 13576
+drwx------ 2 postgres postgres 8192 Jun 10 18:36 1
+
+under base , how many folder are there, it will represent that many number of databases.
+
+postgres=# select oid,datname from pg_database;
+  oid  |  datname
+-------+-----------
+ 13577 | postgres
+     1 | template1
+ 13576 | template0
+ 16438 | gayathri
+(4 rows)
+
+
+->database is physical object, so it is having physical folder, but schema is logical representation only, so it will not occupy
+
+any space.
+
+->all tables/materilized views are phsyical, so it will contains phsyical files under database directory.
+
+->for each database folder we will identify _vm, _fsm, normal number files.
+
+->each file represetns one table
+
+->default this segments size 1gb, if size crossed more than 1 gb, it will create new file like 1247_1,1247_2..etc.
+
+->_vm : visibility map file(it will display the avaible records)
+
+->_fsm : free space map(it will dsiplay avaible space for upcoming records)
+
+->table physical file location:
+
+gayathri=# select pg_relation_filepath('test.emp');
+ pg_relation_filepath
+----------------------
+ base/16438/16441
+(1 row)
+
+***************************************
+tablespaces in postgresql
+***************************************
+->tablespace means it is a logical representation for space or folder or directory or one physical location.
+
+->by default all the data sitiing in base Directory, some people dont want to keep their data in base directory.
+
+->for faster perfroamcne some people keep their data in different folder.
+
+->to overcome space issue
+
+->default tablespaces :
+
+1.pg_default
+
+2.pg_global
+
+->all user created table tablespace information available under pg_tblspc folder
+
+[postgres@node2 DATA]$ cd pg_tblspc
+[postgres@node2 pg_tblspc]$ ls -lr
+total 0
+
+
+postgres=# \db
+       List of tablespaces
+    Name    |  Owner   | Location
+------------+----------+----------
+ pg_default | postgres |
+ pg_global  | postgres |
+(2 rows)
+
+to create tablespce :
+
+->[postgres@node2 pg_tblspc]$ mkdir /var/lib/pgsql/ramtbs
+
+create tablespace:
+
+postgres=# create tablespace rams location '/var/lib/pgsql/ramtbs/';
+CREATE TABLESPACE
+
+there is no space limitation like oracle, until free space is there in respective mountpoint no space issue.
+
+[postgres@node2 pg_tblspc]$ ls -ltr
+total 0
+lrwxrwxrwx 1 postgres postgres 21 Jun 10 19:06 16499 -> /var/lib/pgsql/ramtbs
+[postgres@node2 pg_tblspc]$ cd /var/lib/pgsql/ramtbs
+[postgres@node2 ramtbs]$ ls -ltr
+total 0
+drwx------ 2 postgres postgres 6 Jun 10 19:06 PG_13_202007201
+[postgres@node2 ramtbs]$ cd PG_13_202007201
+[postgres@node2 PG_13_202007201]$ pwd
+/var/lib/pgsql/ramtbs/PG_13_202007201
+[postgres@node2 PG_13_202007201]$ ls -ltr
+total 0
+[postgres@node2 PG_13_202007201]$
+
+->we have just create tablespace, not assigned to any objects.
+
+postgres=# create database srini tablespace rams;
+CREATE DATABASE
+postgres=# \l+
+                                                                    List of databases
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges   |  Size   | Tablespace |                Description
+-----------+----------+----------+-------------+-------------+-----------------------+---------+------------+--------------------------------------------
+ gayathri  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =Tc/postgres         +| 8029 kB | pg_default |
+           |          |          |             |             | postgres=CTc/postgres |         |            |
+ postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |                       | 7957 kB | pg_default | default administrative connection database
+ srini     | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |                       | 7885 kB | rams       |
+ template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +| 7885 kB | pg_default | unmodifiable empty database
+           |          |          |             |             | postgres=CTc/postgres |         |            |
+ template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +| 7885 kB | pg_default | default template for new databases
+           |          |          |             |             | postgres=CTc/postgres |         |            |
+
+newly created one located under below folder.
+
+[postgres@node2 16500]$ pwd
+/var/lib/pgsql/ramtbs/PG_13_202007201/16500
+
+
+postgres=# \c srini
+You are now connected to database "srini" as user "postgres".
+srini=# create table emp(no int);
+CREATE TABLE
+srini=# select pg_relation_filepath('emp');
+            pg_relation_filepath
+---------------------------------------------
+ pg_tblspc/16499/PG_13_202007201/16500/16501
+(1 row)
+
+
+for exising db's also we can change tablespace:
+
+srini=# alter database gayathri tablespace rams;
+ALTER DATABASE
+
+
+during this time exclusive lock applies on databases, that means no one can access.
+
+tablespace limitations:
+
+->at a time for one table/one database only one tablespace can assign.
+
+->one tablespace can contains only one physical location
+
+->one tablespace we can allocated to multiple tables/databases.
+
+->database can contains one tablespace, underlyin tables can contains different tables.
+
+gayathri=# create table emp(no int,name varchar) tablespace pg_Default;
+CREATE TABLE
+gayathri=# select pg_relation_filepath('emp');
+ pg_relation_filepath
+----------------------
+ base/16438/16504
+(1 row)
+
+
+->drop tablesapce :
+
+gayathri=# select relname,relnamespace,reltablespace from pg_class where relname='emp';
+ relname | relnamespace | reltablespace
+---------+--------------+---------------
+ emp     |         2200 |          1663
+(1 row)
+
+postgres=# alter database gayathri tablespace pg_default;
+ALTER DATABASE
+
+to drop tablespace, need to divert all underlying objects to diff tablesace.
+
+********************************************
+Backup and Restore
+********************************************
+->taking exact copy of object in logical format or physical format , we will call it as backup.
+
+->to keep the data safe 
+
+->to keep data secure
+
+->backup file we will call it as dump file.
+
+Restore:
+
+->if data got crashed
+
+->if some one data deleted 
+
+->same as higher environment need data on lower environment.(data refresh)
+
+->data migration from one server to another server
+
+in the above scenorios using backup we will restore the data.
+
+we have 2 types of backups:
+
+1.logical backup: data will be in logical format, not straight forward read mode
+
+->it will not contains any phsyical files.
+
+->to achive this we have an utilites
+
+a.pg_dump
+
+b.pg_dumpall
+
+to restore logical backup we have 2 utilities:
+
+a.psql(if you take backup in plain format, to restore only option is psql) 
+
+->restoring single object from multiple object backup not possible.
+
+b.pg_restore(this one will works only if you take dump in custom format like tar/bin/directory format)
+
+->10 times faster than psql
+
+->we can restore single object from multiple objects backup.
+
+2.physical backup:
+
+->data completely in physical file format
+
+->this is exact copy of your data directory
+
+->we can start another instance with this backup anywhere if you have same version of s/w.
+
+->to achieve this we have an utility called pg_basebackup.
+
+->we can take this backup online and offline.
+
+->we will call this online/offline/file system backup
+
+*********************
+pg_dump :
+*********************
+->it can take single objects backup and multiple objects backup as well
+
+->during backup no locks will apply.
+
+->we can't take globla objects backup.
+
+->whole server backup also not possible.
+
+->we can restore single object from multiple objects bckup.
+
+->we can take backup in plain format and custom format as well.
+
+->for restore we can use pg_restore option.
+
+->backup compression also possible.
+
+->taking backup in parallel format also possible.
+
+*************************
+pg_dumpall
+*************************
+->single object or multiple objects backup not possible.
+
+->whole server backup possible
+
+->global objects backup possible.
+
+->compression not possible
+
+->custom format not possible
+
+->pg_restore option will not work.
+
+->parallel mode also not possible.
+
+*****************************
+pg_basebackup
+*****************************
+->Exact copy of data dir
+
+->We can take data directory backup if services online and offline both the cases.
+
+->no locks
+
+->we can use it for point intime recovery 
+
+->we can start another instance with this backup.
+
+copy(select * from emp where date between 12-06-201 and 20-06-21);
+
+**************************************
+pg_dump scenorios
+***************************************
+scenorio 1: normal backup (structure+data)
+
+[postgres@node2 backup]$ pg_dump -t ram.emp -d srini>emp.sql
+[postgres@node2 backup]$ ls -ltr
+total 4
+-rw-rw-r-- 1 postgres postgres 852 Jun 11 18:31 emp.sql
+
+
+restore:
+
+[postgres@node2 backup]$ psql -f emp.sql -d srini -o emp_restore.log
+[postgres@node2 backup]$ cat emp_restore.log
+SET
+
+
+scenorio2: (strcuture backup)
+
+[postgres@node2 backup]$ pg_dump -t ram.emp -d srini -s>emp_struct.sql
+[postgres@node2 backup]$
+
+[postgres@node2 backup]$ ls -ltr
+total 8
+-rw-rw-r-- 1 postgres postgres  734 Jun 11 18:37 emp_struct.sql
+
+scenorio3: (only data)
+
+[postgres@node2 backup]$ pg_dump -t ram.emp -d srini -a>emp_data.sql
+[postgres@node2 backup]$ ls -ltr
+total 8
+-rw-rw-r-- 1 postgres postgres 3935 Jun 11 18:37 emp_data.sql
+[postgres@node2 backup]$
+
+scenori4:(backup in custo format (.bin format))
+
+[postgres@node2 backup]$ pg_dump -Fc -f emp.bin -t ram.emp -d srini -v 2>emp_bkp.log
+
+[postgres@node2 backup]$ ls -ltr
+total 12
+-rw-rw-r-- 1 postgres postgres 1964 Jun 11 18:41 emp_bkp.log
+-rw-rw-r-- 1 postgres postgres 7081 Jun 11 18:41 emp.bin
+
+->make sure no errors in log file.
+
+->as we have taken backup in custom format psql not works for restore.
+
+restore without dropping table:
+
+[postgres@node2 backup]$ pg_restore -Fc -d srini -n ram -t emp emp.bin -c -v 2>emp_tab_restore.log
+[postgres@node2 backup]$
+[postgres@node2 backup]$
+
+[postgres@node2 backup]$ cat emp_tab_restore.log
+pg_restore: connecting to database for restore
+pg_restore: dropping TABLE emp
+pg_restore: creating TABLE "ram.emp"
+pg_restore: processing data for table "ram.emp"
+
+scenorio5: (multiple tables backup at a time)
+
+[postgres@node2 backup]$ pg_dump -Fc -f multitab.bin -t ram.emp -t ram.dept -t sam.emp -t sam.dept -d srini -v 2>multitab.log
+[postgres@node2 backup]$
+[postgres@node2 backup]$ ls -ltr
+total 20
+-rw-rw-r-- 1 postgres postgres  2593 Jun 11 18:49 multitab.log
+-rw-rw-r-- 1 postgres postgres 14191 Jun 11 18:49 multitab.bin
+[postgres@node2 backup]$
+
+scenorio6:(restore single table form multi dump)
+
+[postgres@node2 backup]$ pg_restore -Fc -d srini -n ram -t emp multitab.bin -v 2>emp_frommulti_restore.log
+[postgres@node2 backup]$
+[postgres@node2 backup]$
+[postgres@node2 backup]$ cat emp_frommulti_restore.log
+pg_restore: connecting to database for restore
+pg_restore: creating TABLE "ram.emp"
+pg_restore: processing data for table "ram.emp"
+
+scenori7: (schema backup)
+
+[postgres@node2 backup]$ pg_dump -Fc -f schema.bin -n ram -d srini -v 2>schemabkp.log
+[postgres@node2 backup]$
+[postgres@node2 backup]$
+[postgres@node2 backup]$ ls -ltr
+total 20
+-rw-rw-r-- 1 postgres postgres  2175 Jun 11 18:52 schemabkp.log
+-rw-rw-r-- 1 postgres postgres 13546 Jun 11 18:52 schema.bin
+[postgres@node2 backup]$
+
+[postgres@node2 backup]$ pg_restore -Fc -d srini -n ram schema.bin -v 2>scehmarestore.log
+
+scenori8: restore single table from schema dump
+
+[postgres@node2 backup]$ pg_restore -Fc -d srini -n ram -t emp schema.bin -v 2>emp_from_scehma.log
+
+scenorio9: (take the dump in tar format)
+
+[postgres@node2 backup]$ pg_dump -Ft -f schema.tar -n ram -d srini -v 2>schemabkp.log
+[postgres@node2 backup]$ ls -ltr
+total 20
+-rw-rw-r-- 1 postgres postgres  2478 Jun 11 18:57 schemabkp.log
+-rw-rw-r-- 1 postgres postgres 14848 Jun 11 18:57 schema.tar
+
+scenorio10: restore using tar format dump
+
+[postgres@node2 backup]$ pg_restore -Ft -d srini -n ram schema.tar -v 2>schema_Restore.log
+[postgres@node2 backup]$
+[postgres@node2 backup]$ cat schema_Restore.log
+pg_restore: connecting to database for restore
+pg_restore: creating TABLE "ram.dept"
+pg_restore: creating TABLE "ram.emp"
+pg_restore: processing data for table "ram.dept"
+pg_restore: processing data for table "ram.emp"
+[postgres@node2 backup]$
+
+
+scenorio11: take dump in directory format
+
+[postgres@node2 backup]$ pg_dump -Fd -f schema -n ram -d srini -v 2>schemabkp_dir.log
+[postgres@node2 backup]$ ls -ltr
+total 4
+-rw-rw-r-- 1 postgres postgres 2175 Jun 11 18:59 schemabkp_dir.log
+drwx------ 2 postgres postgres   50 Jun 11 18:59 schema
+[postgres@node2 backup]$ cd schema/
+[postgres@node2 schema]$ ls -ltr
+total 12
+-rw-rw-r-- 1 postgres postgres 1708 Jun 11 18:59 toc.dat
+-rw-rw-r-- 1 postgres postgres 3333 Jun 11 18:59 3129.dat
+-rw-rw-r-- 1 postgres postgres 3333 Jun 11 18:59 3130.dat
+[postgres@node2 schema]$ pwd
+/var/lib/pgsql/backup/schema
+[postgres@node2 schema]$ cd ..
+
+->directory format it will occupy size but we can run parallel jobs
+
+->tar format we can compress but we can't run parallel jobs.
+
+scenorio12: take backup parallely
+
+[postgres@node2 backup]$ pg_dump -Fd -f schema -n ram -d srini -j 2 -v 2>schemabkp_dir.log
+[postgres@node2 backup]$ ls -ltr
+total 4
+drwx------ 2 postgres postgres   50 Jun 11 19:02 schema
+-rw-rw-r-- 1 postgres postgres 2262 Jun 11 19:02 schemabkp_dir.log
+[postgres@node2 backup]$
+
+scenorio13: restore using dir format dump
+
+[postgres@node2 backup]$ pg_restore -Fd -d srini -n ram schema -v 2>schema_Restore2.log
+[postgres@node2 backup]$ cat schema_Restore2.log
+pg_restore: connecting to database for restore
+pg_restore: creating TABLE "ram.dept"
+pg_restore: creating TABLE "ram.emp"
+pg_restore: processing data for table "ram.dept"
+pg_restore: processing data for table "ram.emp"
+
+
+scenorio14: take multiple schemas dump
+
+[postgres@node2 backup]$ pg_dump -Fc -f multsm.bin -n ram -n sam -d srini -v 2>multischema.log
+[postgres@node2 backup]$ ls -ltr
+total 20
+-rw-rw-r-- 1 postgres postgres 14527 Jun 11 19:06 multsm.bin
+-rw-rw-r-- 1 postgres postgres  2593 Jun 11 19:06 multischema.log
+[postgres@node2 backup]$
+
+scenori15: restore single schema form multi schema
+
+[postgres@node2 backup]$ pg_restore -Fc -d srini -n sam multsm.bin -v 2>sam_schema_Restore.log
+[postgres@node2 backup]$ cat sam_schema_Restore.log
+pg_restore: connecting to database for restore
+pg_restore: creating TABLE "sam.dept"
+
+scenori17: database backup
+
+[postgres@node2 backup]$ pg_dump -Fc -f db.bin -d srini -v 2>db.log
+[postgres@node2 backup]$ ls -ltr
+total 20
+-rw-rw-r-- 1 postgres postgres  2624 Jun 11 19:08 db.log
+-rw-rw-r-- 1 postgres postgres 14527 Jun 11 19:08 db.bin
+[postgres@node2 backup]$
+
+[postgres@node2 backup]$ pg_restore -Fc -d srini db.bin -v 2> db_Restore.log
+[postgres@node2 backup]$
+[postgres@node2 backup]$
+
+************************************
+pg_dumpall
+************************************
+[postgres@node2 backup]$ pg_dumpall>fullserverbkp.sql
+[postgres@node2 backup]$ ls -ltr
+total 20
+-rw-rw-r-- 1 postgres postgres 20247 Jun 12 18:07 fullserverbkp.sql
+
+to restore full dump:
+
+[postgres@node2 backup]$ psql -f fullserverbkp.sql -d postgres -o fullserver_restore.log
+
+
+take only global objects backup:
+
+[postgres@node2 backup]$ pg_dumpall -g>globalobj.sql
+[postgres@node2 backup]$
+
+[postgres@node2 backup]$ psql -f globalobj.sql -o globalobj.log
+
+
+*************************************************
+enabling arcive mode
+*************************************************
+postgres=# create table emp(no int,name varchar,sal int);
+CREATE TABLE
+postgres=# insert into emp values(generate_series(1,100000),'emp'||generate_series(1,100000),generate_series(1,100000));
+INSERT 0 100000
+postgres=# select * from emp limit 5;
+ no | name | sal
+----+------+-----
+  1 | emp1 |   1
+  2 | emp2 |   2
+  3 | emp3 |   3
+  4 | emp4 |   4
+  5 | emp5 |   5
+(5 rows)
+
+[postgres@node2 pg_wal]$ pg_controldata -D /var/lib/pgsql/DATA
+
+it will display successfull checkpoint, before this WAL file clean reaming things.
+
+to clean up wal/archive files we have an utility called pg_archivecleanup.
+
+by mistake if we removed wal files which are not applied check point, if server restarted services will not come up.
+
+in that case we need to set for last successfull chkpoint
+
+[postgres@node2 log]$ pg_resetwal -D /var/lib/pgsql/DATA/
+Write-ahead log reset
+
+
+to enable archive mode:
+
+archive_mode = on (requires restart)
+archive_command = 'cp %p /var/lib/pgsql/archive/%f' (within the server)
+
+archive_command = 'scp %p postgresq@10.92.201.107:/var/lib/pgsql/archive/%f' (password less connection)
+
+[postgres@node2 DATA]$ mkdir /var/lib/pgsql/archive
+
+once archive mode enable do some forcefull checkpoint by running below comamnd:
+
+postgres=# select pg_switch_wal();
+ pg_switch_wal
+---------------
+ 0/BC000078
+(1 row)
+
+postgres=# select pg_switch_wal();
+ pg_switch_wal
+---------------
+ 0/BD000000
+(1 row)
+
+
+below query to get archive files statistics:
+
+postgres=# select * from pg_stat_archiver;
+ archived_count |    last_archived_wal     |      last_archived_time       | failed_count | last_failed_wal | last_failed_time |          stats_reset
+
+----------------+--------------------------+-------------------------------+--------------+-----------------+------------------+-----------------------------
+--
+              2 | 0000000100000000000000BC | 2021-06-12 18:38:08.769176-07 |            0 |                 |                  | 2021-06-04 18:45:19.697637-0
+7
+(1 row)
+
+postgres=#
+
+[postgres@node2 archive]$ pwd
+/var/lib/pgsql/archive
+[postgres@node2 archive]$ pg_archivecleanup /var/lib/pgsql/archive 000000010000000100000000 (this number and after files only exists)
+[postgres@node2 archive]$ ls -ltr
+total 180224
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000000
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000001
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000002
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000003
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000004
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000005
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000006
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000007
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000008
+-rw------- 1 postgres postgres 16777216 Jun 12 18:41 000000010000000100000009
+-rw------- 1 postgres postgres 16777216 Jun 12 18:42 00000001000000010000000A
+[postgres@node2 archive]$
+
+****************************************************
+physical backup
+****************************************************
+->respective backup directory should be epmty
+
+->pg_basebackup is the utility to take this backup
+
+[postgres@node2 backup]$ pg_basebackup -D /var/lib/pgsql/backup/ -X fetch -P -v
+pg_basebackup: initiating base backup, waiting for checkpoint to complete
+pg_basebackup: checkpoint completed
+pg_basebackup: write-ahead log start point: 1/E000028 on timeline 1
+57943/57943 kB (100%), 1/1 tablespace
+pg_basebackup: write-ahead log end point: 1/E000100
+pg_basebackup: syncing data to disk ...
+pg_basebackup: renaming backup_manifest.tmp to backup_manifest
+pg_basebackup: base backup completed
+
+
+[postgres@node2 backup]$ ls -ltr
+total 288
+-rw------- 1 postgres postgres    224 Jun 12 18:48 backup_label
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_twophase
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_subtrans
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_snapshots
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_serial
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_notify
+drwx------ 4 postgres postgres     34 Jun 12 18:48 pg_multixact
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_dynshmem
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_commit_ts
+drwx------ 7 postgres postgres     62 Jun 12 18:48 base
+drwx------ 2 postgres postgres     17 Jun 12 18:48 pg_xact
+-rw------- 1 postgres postgres      3 Jun 12 18:48 PG_VERSION
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_tblspc
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_stat_tmp
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_stat
+drwx------ 2 postgres postgres      6 Jun 12 18:48 pg_replslot
+drwx------ 4 postgres postgres     65 Jun 12 18:48 pg_logical
+-rw------- 1 postgres postgres     88 Jun 12 18:48 postgresql.auto.conf
+-rw------- 1 postgres postgres   1636 Jun 12 18:48 pg_ident.conf
+drwx------ 2 postgres postgres   4096 Jun 12 18:48 log
+-rw------- 1 postgres postgres  28055 Jun 12 18:48 postgresql.conf
+-rw------- 1 postgres postgres   5051 Jun 12 18:48 pg_hba.conf
+drwx------ 2 postgres postgres   4096 Jun 12 18:48 global
+-rw------- 1 postgres postgres     44 Jun 12 18:48 current_logfiles
+drwx------ 3 postgres postgres     58 Jun 12 18:48 pg_wal
+-rw------- 1 postgres postgres 226895 Jun 12 18:48 backup_manifest
+[postgres@node2 backup]$ pwd
+/var/lib/pgsql/backup
+[postgres@node2 backup]$
+
+restore using full backup :
+===========================
+->we need same version of postgresql s/w.
+
+->change port in backup directory postgresql.conf file
+
+port=5433
+
+->change permission of backup directory
+
+[postgres@node2 backup]$ chmod 0700 /var/lib/pgsql/backup/
+
+[postgres@node2 backup]$ pg_ctl -D /var/lib/pgsql/backup/ status
+pg_ctl: no server running
+[postgres@node2 backup]$
+[postgres@node2 backup]$ pg_ctl -D /var/lib/pgsql/backup/ start
+
+[postgres@node2 backup]$ psql -p5432
+psql (13.3)
+Type "help" for help.
+
+postgres=# show data_directory;
+   data_directory
+---------------------
+ /var/lib/pgsql/DATA
+(1 row)
+
+postgres=# \q
+[postgres@node2 backup]$ psql -p5433
+psql (13.3)
+Type "help" for help.
+
+postgres=# show data_directory;
+    data_directory
+-----------------------
+ /var/lib/pgsql/backup
+(1 row)
+
+************************************************
+point intime recovery
+************************************************
+->we have backup at morning 6am every day, application team created table at 7am, they done data loading upto 
+
+10am, 10:01 am suddenly table got dropped.
+
+->eventhough we dont have backup, still we can able to restore upto specific point in time, we call this concept
+
+as point intime recovery(PITR)
+
+->main thing is we need enough wal/archive files.then only we can able to perfrom PITR.
+
+basebackup taken time :
+
+
+[postgres@node2 backup]$ date
+Sun Jun 13 18:11:37 PDT 2021
+[postgres@node2 backup]$
+[postgres@node2 backup]$
+[postgres@node2 backup]$ pg_basebackup -D /var/lib/pgsql/backup/ -X fetch -P -v
+
+our backup time is START TIME: 2021-06-13 18:12:02 PDT  and STOP TIME: 2021-06-13 18:12:03 PDT
+
+
+postgres=# create table dept(no int,name varchar);
+CREATE TABLE
+postgres=# insert into dept values(generate_series(1,100),'data'||generate_series(1,100));
+INSERT 0 100
+postgres=# select count(*) from dept;
+ count
+-------
+   100
+(1 row)
+
+postgres=# select now();
+              now
+-------------------------------
+ 2021-06-13 18:15:15.912237-07
+(1 row)
+
+
+table dropped by mistake, find the timing of drop table statmt from audit log.
+
+[postgres@node2 log]$ cat postgresql-2021-06-13_000000.log|grep 'drop table dept'
+psql postgres postgres [local] 5356 2021-06-13 18:16:27 PDTLOG:  statement: drop table dept;
+
+->to get this table back, we need to recover upto before drop statement time.
+
+will perfrom point intime recovery upto 2021-06-13 18:16:00
+
+->go to backup location and check backup is there or not.
+
+->copy extra wal files from pg_wal dir to archive directory.
+
+[postgres@node2 archive]$ cp -i /var/lib/pgsql/DATA/pg_wal/* .
+cp: overwrite ‘./000000010000000100000011.00000028.backup’? y
+cp: omitting directory ‘/var/lib/pgsql/DATA/pg_wal/archive_status’
+
+->change port in backup directory
+
+->[postgres@node2 backup]$ touch recovery.signal
+
+->[postgres@node2 backup]$ cat postgresql.auto.conf
+# Do not edit this file manually!
+# It will be overwritten by the ALTER SYSTEM command.
+restore_command='cp /var/lib/pgsql/archive/%f %p'
+recovery_target_time='2021-06-13 18:16:00.000000-00'
+
+->start services and login to the new instance and exectue below command to make the server read -write.
+
+postgres=# select pg_wal_replay_resume();
+ pg_wal_replay_resume
+----------------------
+
+(1 row)
+
+
+now our table in new instance, but we need table in old instance.
+
+
+[postgres@node2 backup]$ pg_dump -t emp -d postgres -p5433|psql -d postgres -p5432
+
+[postgres@node2 backup]$ psql -p5432
+psql (13.3)
+Type "help" for help.
+
+postgres=# \dt
+        List of relations
+ Schema | Name | Type  |  Owner
+--------+------+-------+----------
+ public | emp  | table | postgres
+(1 row)
+
+*******************************************
+Maintanance Actvities
+*******************************************
+->to keep database safe
+->to keep database sceure
+->to increase perfromance (stats colelction/reshrink/reindex/reorg(re distribution))
+->to reclaim un ncessary space 
+
+below are the utilities :
+
+1.analyze
+2.vacuum
+3.vacuum full
+4.reindex
+
+1.analyze: to update the statistics, if stats are upto to date, optimizer will geenrate good execution plan.
+->no locks on the table
+->no additional space required
+->table level analyze and database level analyze.
+
+2.vacuum : to remove the dead tuples.
+
+->Dead tuples: if my table has 100 records, that means it will occupy 100 storage locations on top of disk, if i delete 50 records, 
+50 locations should become free, but those locations will not become free, those tuples we will call it as dead tuples.
+
+->if dead tuples are there optimizer will go for full tablescan.
+->new records can't get free locations.
+->vacuum will clear dead tuples and marks that storage locations ready for reuse.
+->it will not applies any lock.
+->no additional space required.
+->it will not reclaim any space to disk.
+
+3.vacuum full: if you have deleted huge data from one table, still that table size showing same, we call this as bloat.
+
+->we are loading 2gb data, table sizes showing 10gb, means data distribution not done properly, we will call it as bloat.
+
+vacuum full will removes bloat and reclaims space to disk.
+
+->redistribute the data.
+
+->it will applies exclusive lock.
+
+->same amount of additional space required.
+
+->table size 2gb, but occupied 10gb, that means we have 8gb scope to reclaim, we need additional 8gb free space.
+
+->as part of data redistribution, if tablename is emp--->emp_new, once all the data copied to emp_new, emp table will be dropped,
+
+and emp_new will be renamed as emp.
+
+->each and every table will have physical file(Data file), after vacuum full only it will change.
+
+
+4.reindex:
+
+->if table has index, table size means (table+index)
+
+->if table get bloated, there might be chances index also get bloated.
+
+->to redistribute indexes data ,we will use reindex.
+
+->applies exclusive lock
+
+->additional space required.
+
+postgresql given one option to automate analyze& vacuum operations, for that we need to enable/disable autovacuum option in postgresql.conf file.
+
+postgres=# show autovacuum;
+ autovacuum
+------------
+ on
+(1 row)
+
+to perfrom autovacuum operations, conf file having some limitations.
+
+#autovacuum_work_mem = -1               # min 1MB, or -1 to use maintenance_work_mem=64MB
+autovacuum = off /on                       # Enable autovacuum subprocess?  'on'
+log_autovacuum_min_duration = 0      # -1 disables, 0 logs all actions and
+autovacuum_max_workers = 3             # max number of autovacuum subprocesses
+autovacuum_naptime = 1min              # time between autovacuum runs
+
+#autovacuum_vacuum_threshold = 50       # min number of row updates before
+#autovacuum_vacuum_insert_threshold = 1000      # min number of row inserts
+#autovacuum_vacuum_scale_factor = 0.2   # fraction of table size before vacuum (for the table if 20% growth)
+#autovacuum_vacuum_insert_scale_factor = 0.2    # fraction of inserts over table (if 20% inserts happend)
+
+#autovacuum_analyze_threshold = 50      # min number of row updates before 
+#autovacuum_analyze_scale_factor = 0.1  # fraction of table size before analyze
+
+#autovacuum_freeze_max_age = 200000000  # maximum XID age before forced vacuum (Autovacuum wraparound protection)
+
+->to prevent wraparound
+
+until this time if you have not done either autovacuum/manual vacuum, table data will goes to hidden state.
+
+normally once max freeze age reached, it will trigger autovacuum wrap around protection process id(should not kill)
+
+
+#autovacuum_vacuum_cost_delay = 2ms     # default vacuum cost delay for (for every run it will sleept 2ms)
+                                        # autovacuum, in milliseconds;
+#autovacuum_vacuum_cost_limit = -1      # default vacuum cost limit for
+                                        # autovacuum, -1 means use
+-bash-4.2$
+
+****************************************
+practical session
+****************************************
+tables stats:
+
+analyze operation:
+
+postgres=# analyze emp;
+ANALYZE
+postgres=# select schemaname,relname,n_tup_ins,n_tup_del,n_live_tup,n_dead_tup,last_analyze from pg_stat_user_tables;
+ schemaname | relname | n_tup_ins | n_tup_del | n_live_tup | n_dead_tup |         last_analyze
+------------+---------+-----------+-----------+------------+------------+-------------------------------
+ public     | emp     |   1000000 |         0 |    1000000 |          0 | 2021-04-16 19:07:55.218622-07
+(1 row)
+
+postgres=# explain select * from emp;
+                          QUERY PLAN
+--------------------------------------------------------------
+ Seq Scan on emp  (cost=0.00..16369.00 rows=1000000 width=18)
+(1 row)
+
+
+vacuum operation:
+------------------
+
+postgres=# explain select * from emp;
+                          QUERY PLAN
+--------------------------------------------------------------
+ Seq Scan on emp  (cost=0.00..16369.00 rows=1000000 width=18)
+(1 row)
+
+postgres=# delete from emp where no<500000;
+DELETE 499999
+postgres=# select count(*) from emp;
+ count
+--------
+ 500001
+(1 row)
+
+postgres=# select schemaname,relname,n_tup_ins,n_tup_del,n_live_tup,n_dead_tup,last_analyze from pg_stat_user_tables;
+ schemaname | relname | n_tup_ins | n_tup_del | n_live_tup | n_dead_tup |         last_analyze
+------------+---------+-----------+-----------+------------+------------+-------------------------------
+ public     | emp     |   1000000 |    499999 |     500001 |     499999 | 2021-04-16 19:07:55.218622-07
+(1 row)
+
+postgres=# explain select * from emp;
+                          QUERY PLAN
+--------------------------------------------------------------
+ Seq Scan on emp  (cost=0.00..16369.00 rows=1000000 width=18)
+(1 row)
+
+postgres=# analyze emp;
+ANALYZE
+postgres=# explain select * from emp;
+                         QUERY PLAN
+-------------------------------------------------------------
+ Seq Scan on emp  (cost=0.00..11369.01 rows=500001 width=19)
+(1 row)
+
+postgres=# select schemaname,relname,n_tup_ins,n_tup_del,n_live_tup,n_dead_tup,last_analyze from pg_stat_user_tables;
+ schemaname | relname | n_tup_ins | n_tup_del | n_live_tup | n_dead_tup |         last_analyze
+------------+---------+-----------+-----------+------------+------------+-------------------------------
+ public     | emp     |   1000000 |    499999 |     500001 |     499999 | 2021-04-16 19:09:53.786287-07
+(1 row)
+
+postgres=# select pg_relation_filepath('emp');
+ pg_relation_filepath
+----------------------
+ base/13577/16654
+(1 row)
+
+postgres=# vacuum emp;
+VACUUM
+postgres=# select pg_relation_filepath('emp');
+ pg_relation_filepath
+----------------------
+ base/13577/16654
+(1 row)
+
+postgres=# select schemaname,relname,n_tup_ins,n_tup_del,n_live_tup,n_dead_tup,last_analyze,last_vacuum from pg_stat_user_tables;
+ schemaname | relname | n_tup_ins | n_tup_del | n_live_tup | n_dead_tup |         last_analyze          |          last_vacuum
+------------+---------+-----------+-----------+------------+------------+-------------------------------+-------------------------------
+ public     | emp     |   1000000 |    499999 |     500001 |          0 | 2021-04-16 19:09:53.786287-07 | 2021-04-16 19:10:40.712867-07
+
+vacuum full:
+--------------
+postgres=# vacuum full emp;
+VACUUM
+postgres=# \dt+ emp
+                          List of relations
+ Schema | Name | Type  |  Owner   | Persistence | Size  | Description
+--------+------+-------+----------+-------------+-------+-------------
+ public | emp  | table | postgres | permanent   | 25 MB |
+(1 row)
+
+postgres=# select pg_relation_filepath('emp');
+ pg_relation_filepath
+----------------------
+ base/13577/16660
+(1 row)
+
+reindex :
+--------
+postgres=# reindex table emp;
+REINDEX
+
+fulldatabase:
+--------------
+postgres=# reindex table emp;
+REINDEX
+postgres=# vacuum;
+VACUUM
+postgres=# analyze;
+ANALYZE
+postgres=# vacuum full;
+VACUUM
+
+we need to run vacuum/.. on multiple tables:
+---------------------------------------------
+-bash-4.2$ vacuumdb -a (all databases)
+vacuumdb: vacuuming database "murali"
+vacuumdb: vacuuming database "pg_restores"
+vacuumdb: vacuuming database "postgres"
+vacuumdb: vacuuming database "template1"
+vacuumdb: vacuuming database "test"
+-bash-4.2$ vacuumdb -d postgres (only postgres)
+vacuumdb: vacuuming database "postgres"
+-bash-4.2$ vacuumdb -d postgres -t emp -t dept (multiple tables)
+vacuumdb: vacuuming database "postgres"
+-bash-4.2$ vacuumdb -d postgres -t emp -t dept -f (vacuum full)
+vacuumdb: vacuuming database "postgres"
+-bash-4.2$ vacuumdb -d postgres -t emp -t dept -z (vacuum+analyze)
+vacuumdb: vacuuming database "postgres"
+-bash-4.2$ vacuumdb -d postgres -t emp -t dept -Z (only analyze)
+vacuumdb: vacuuming database "postgres"
+-bash-4.2$ vacuumdb -d postgres -t emp -t dept -Z -j 2 (parallel jobs)
+
+-bash-4.2$ reindexdb -a
+-bash-4.2$ reindexdb -t emp
+-bash-4.2$ reindexdb -S public
+
+below tables we need to run vacuum on schedule basis:
+
+vacuumdb -d postgres -t emp -t dept
+
+-bash-4.2$ cat test.sh
+vacuumdb -d postgres -t emp -t dept
+-bash-4.2$ chmod 777 test.sh
+
+to schedule jobs, we have tool called crontab .
+
+-bash-4.2$ crontab -l
+30 8 * * * /usr/pgsql-13/bin/test.sh
+30 8 * * * /usr/local/pgsql/bin/test.sh
+
+https://www.geeksforgeeks.org/crontab-in-linux-with-examples/
+
+we will schedule vacuum jobs based on size:
+
+1 to 5gb tables (daily we can) : vacuum+analyze
+
+5gb to 100gb (plan weekend): sunday
+
+100gb above 15 days once.
+
+*********************************************
+database upgrade
+*********************************************
+->to get new features
+
+->existing features enhancement
+
+->if any buges are there in the old version s/w, to fix those bugs.
+
+->as per the company standard, once new version released within 2 months need to go for higher version
+
+->postgresql s/w version should be compatabilie with application server version
+
+coming to postgresql we have 2 types of upgrades.
+
+
+1.major upgrade : version change
+
+2.minor upgrade : release change
+
+
+10.1.2 to 10.2.4  (minor version version, only releae change)
+
+10.3 to 10.7 (this is also minor)
+
+10 to 11 (this is major upgrade)
+
+->in postgresql 2 ways of upgrades are there.
+
+
+->manual  upgrade : this is before 8.4 
+
+->auto upgrade  : from 8.4 onwards to perfrom upgrade we have an utility called pg_upgrade, it will complete the upgrade automatically.
+
+==========================
+manual upgrade process:
+==========================
+->below 8.4 version upgrades we need to use this approach.
+
+->exmaple upgrade from 8.1 to 8.4
+
+
+->belwo are the 8.1 details:
+
+BIN location : /usr/local/pgsql_81/bin
+DATA DIR     : /var/lib/pgsql/data81
+port         : 5432
+
+->install 8.4 version s/w like below
+
+BIN location : /usr/local/pgsql_84/bin
+DATA DIR     : /var/lib/pgsql/data84
+port         : 5433
+
+->ask application to stop the jobs on 81 server.
+
+->take pg_dumpall from 81
+
+->restore it into 84.
+
+->copy all the parameters and values from 81 postgresql.conf file and pg_hba.conf file to 84 configuration files.
+
+->restart 84 services, shut down 81 servies, handover system  to application team.
+
+->if we get a requirement upgrade from 8.1 version to 10, directly upgrade to 10 not possible.
+
+->in middile we have 8.4 is the major version , completely chnaged in 8.4, so first we need to go to 8.4,
+
+then from 8.4 to above any version ok.
+
+********************************************************
+postgresql auto upgrade from 9.6 to 13
+********************************************************
+->belwo are the 9.6 details:
+
+->BIN : /usr/pgsql-9.6/bin
+   DD : /var/lib/pgsql/9.6/data/
+   PORT: 5432
+
+->need extra space for new binaries installationa and install binaries like below.
+
+->13 version details:
+
+BIN : /usr/pgsql-13/bin
+DD  : /var/lib/pgsql/13/data
+port : 5433
+
+->copy all the parameters from postgresql.conf file and pg_hba.conf file from 9.6 to 13 version.
+->ask application team to stop the jobs.
+->take pg_dumpall backup/pg_basebackup.
+->ask vmware team to take the server snapshot backup.
+->take your side objects counts from pg_stat_user_tables.
+
+rambabu=# select count(*) from pg_stat_user_tables; (from each database)
+
+list of users :
+
+rambabu=# select count(*) from pg_user;
+
+->check upgrade compatability:
+==============================
+-bash-4.2$ /usr/pgsql-13/bin/pg_upgrade -b oldbin -B newbin -d olddatadir -D newdatadir -p opldport -P newport -c
+
+
+-bash-4.2$ /usr/pgsql-13/bin/pg_upgrade -b /usr/pgsql-9.6/bin -B /usr/pgsql-13/bin -d /var/lib/pgsql/9.6/data/ -D /var/lib/pgsql/13/data/ -p5432 -P5433 -c
+Performing Consistency Checks on Old Live Server
+------------------------------------------------
+Checking cluster versions                                   ok
+Checking database user is the install user                  ok
+Checking database connection settings                       ok
+Checking for prepared transactions                          ok
+Checking for system-defined composite types in user tables  ok
+Checking for reg* data types in user tables                 ok
+Checking for contrib/isn with bigint-passing mismatch       ok
+Checking for tables WITH OIDS                               ok
+Checking for invalid "sql_identifier" user columns          ok
+Checking for invalid "unknown" user columns                 ok
+Checking for hash indexes                                   ok
+Checking for presence of required libraries                 ok
+Checking database user is the install user                  ok
+Checking for prepared transactions                          ok
+Checking for new cluster tablespace directories             ok
+
+*Clusters are compatible*
+-bash-4.2$
+
+->proceed with actual upgrade:
+------------------------------
+-bash-4.2$ /usr/pgsql-13/bin/pg_upgrade -b /usr/pgsql-9.6/bin -B /usr/pgsql-13/bin -d /var/lib/pgsql/9.6/data/ -D /var/lib/pgsql/13/data/ -p5432 -P5433
+Performing Consistency Checks
+-----------------------------
+Checking cluster versions                                   ok
+Checking database user is the install user                  ok
+Checking database connection settings                       ok
+Checking for prepared transactions                          ok
+Checking for system-defined composite types in user tables  ok
+Checking for reg* data types in user tables                 ok
+Checking for contrib/isn with bigint-passing mismatch       ok
+Checking for tables WITH OIDS                               ok
+Checking for invalid "sql_identifier" user columns          ok
+Checking for invalid "unknown" user columns                 ok
+Creating dump of global objects                             ok
+Creating dump of database schemas
+                                                            ok
+Checking for presence of required libraries                 ok
+Checking database user is the install user                  ok
+Checking for prepared transactions                          ok
+Checking for new cluster tablespace directories             ok
+
+If pg_upgrade fails after this point, you must re-initdb the
+new cluster before continuing.
+
+Performing Upgrade
+------------------
+Analyzing all rows in the new cluster                       ok
+Freezing all rows in the new cluster                        ok
+Deleting files from new pg_xact                             ok
+Copying old pg_clog to new server                           ok
+Setting next transaction ID and epoch for new cluster       ok
+Deleting files from new pg_multixact/offsets                ok
+Copying old pg_multixact/offsets to new server              ok
+Deleting files from new pg_multixact/members                ok
+Copying old pg_multixact/members to new server              ok
+Setting next multixact ID and offset for new cluster        ok
+Resetting WAL archives                                      ok
+Setting frozenxid and minmxid counters in new cluster       ok
+Restoring global objects in the new cluster                 ok
+Restoring database schemas in the new cluster
+                                                            ok
+Copying user relation files
+                                                            ok
+Setting next OID for new cluster                            ok
+Sync data directory to disk                                 ok
+Creating script to analyze new cluster                      ok
+Creating script to delete old cluster                       ok
+Checking for hash indexes                                   ok
+
+Upgrade Complete
+----------------
+Optimizer statistics are not transferred by pg_upgrade so,
+once you start the new server, consider running:
+    ./analyze_new_cluster.sh
+
+Running this script will delete the old cluster's data files:
+    ./delete_old_cluster.sh
+-bash-4.2$
+
+
+->sync configuration files: better before upgrade copy all parameters from 9.6 to 13 version conf files.
+
+->start 13 services and do validation
+
+->-bash-4.2$ ./analyze_new_cluster.sh
+
+->ask application team to do the techincal LV/user LV.
+
+Reversion :
+===============
+during technical verification they might face some issue, they may ask us to revert.
+
+->shut down 13 servies
+
+->start 9.6 servies
+
+reversion in second phase:
+===========================
+they will use higher version 10 days, they will make huge changes in data, suddenly they are saying need to revert.
+
+->app team will stop jobs on 13 version.
+
+->take pg_dumpall backup
+
+->Restore into 9.6
+
+->if they are ok with 13 product , they no need older version:
+==============================================================
+-bash-4.2$ ./delete_old_cluster.sh
+-bash-4.2$ pwd
+/var/lib/pgsql/upgrade
+
+======================================
+minor upgrade
+======================================
+13.1 binaries :
+
+bin :/usr/local/pgsql_131/bin
+dd  : /var/lib/pgsql/data13
+port : 5432
+
+/usr/local/pgsql_131/bin/pg_ctl -D /var/lib/pgsql/data13 status/start/stop
+
+install 13.3 bianires:
+
+bin :/usr/local/pgsql_133/bin
+
+->/usr/local/pgsql_131/bin/pg_ctl -D /var/lib/pgsql/data13 stop
+
+->/usr/local/pgsql_133/bin/pg_ctl -D /var/lib/pgsql/data13 start
+
+
+this one will work below 3 minor version an above 3 minor versions will work.
+
+13.1,13.2,13.3,13.4
+
+***********************************************************
+pgbench
+***********************************************************
+->it is a bench mark testing utility.
+
+->getting the metricks in different situation to estimate the capcity of database server.
+
+->[postgres@node2 bin]$ pgbench -i rambabu
+dropping old tables...
+NOTICE:  table "pgbench_accounts" does not exist, skipping
+NOTICE:  table "pgbench_branches" does not exist, skipping
+NOTICE:  table "pgbench_history" does not exist, skipping
+NOTICE:  table "pgbench_tellers" does not exist, skipping
+creating tables...
+generating data (client-side)...
+100000 of 100000 tuples (100%) done (elapsed 0.42 s, remaining 0.00 s)
+vacuuming...
+creating primary keys...
+done in 0.98 s (drop tables 0.00 s, create tables 0.01 s, client-side generate 0.65 s, vacuum 0.22 s, primary keys 0.11 s).
+[postgres@node2 bin]$
+
+
+[postgres@node2 bin]$ pgbench -t 10 -c 10 rambabu
+starting vacuum...end.
+transaction type: <builtin: TPC-B (sort of)>
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 1
+number of transactions per client: 10
+number of transactions actually processed: 100/100
+latency average = 19.632 ms
+tps = 509.363419 (including connections establishing)
+tps = 523.912990 (excluding connections establishing)
+
+
+estimation with parallel jobs:
+==============================
+[postgres@node2 bin]$ pgbench -t 10 -c 10 -j 2 rambabu
+starting vacuum...end.
+transaction type: <builtin: TPC-B (sort of)>
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 2
+number of transactions per client: 10
+number of transactions actually processed: 100/100
+latency average = 17.219 ms
+tps = 580.756190 (including connections establishing)
+tps = 619.369986 (excluding connections establishing)
+
+estimation for only select queries:
+===================================
+[postgres@node2 bin]$ pgbench -t 10 -c 10 -S -j 2 rambabu
+starting vacuum...end.
+transaction type: <builtin: select only>
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 2
+number of transactions per client: 10
+number of transactions actually processed: 100/100
+latency average = 7.800 ms
+tps = 1282.039119 (including connections establishing)
+tps = 1436.040367 (excluding connections establishing)
+
+
+with vacuum before estimation:
+==========================
+[postgres@node2 bin]$ pgbench -t 10 -c 10 -j 2 -v rambabu
+starting vacuum...end.
+starting vacuum pgbench_accounts...end.
+transaction type: <builtin: TPC-B (sort of)>
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 2
+number of transactions per client: 10
+number of transactions actually processed: 100/100
+latency average = 16.727 ms
+tps = 597.833550 (including connections establishing)
+tps = 625.015267 (excluding connections establishing)
+
+
+without vacuum:
+===============
+[postgres@node2 bin]$ pgbench -t 10 -c 10 -j 2 -n rambabu
+transaction type: <builtin: TPC-B (sort of)>
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 2
+number of transactions per client: 10
+number of transactions actually processed: 100/100
+latency average = 16.001 ms
+tps = 624.947317 (including connections establishing)
+tps = 658.640072 (excluding connections establishing)
+
+pgbench report for realtime queries:
+====================================
+[postgres@node2 DATA]$ pgbench -c 10 -t 10 -f test.sql rambabu
+starting vacuum...end.
+transaction type: test.sql
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 1
+number of transactions per client: 10
+number of transactions actually processed: 100/100
+latency average = 392.773 ms
+tps = 25.459986 (including connections establishing)
+tps = 25.481443 (excluding connections establishing)
+
+===========================================
+pgbadger
+===========================================
+->our audit log is format text file.
+->for 1 days its generating 5gb size of log files. for one month 150gb size of logfiles.
+->to represent audit log in grphical format , we will use pgbadger report.
+->pgbadger is third party tool to present data in graphical format, we will call it as log analyzer report.
+
+
+[root@localhost pgbadger-11.4]# wget https://sourceforge.net/projects/pgbadger/files/11.4/pgbadger-11.4.tar.gz .
+
+
+-bash-4.2$ tar -xvf pgbadger-11.2.tar.gz
+
+-bash-4.2$ cd pgbadger-11.2/
+-bash-4.2$ ls -ltr
+total 1748
+drwxr-xr-x 2 ram  ram      113 Mar 29  2020 tools
+drwxr-xr-x 2 ram  ram        6 Mar 29  2020 tmp
+drwxr-xr-x 4 ram  ram       88 Mar 29  2020 t
+drwxr-xr-x 3 ram  ram     4096 Mar 29  2020 resources
+-rw-r--r-- 1 ram  ram    35641 Mar 29  2020 README.md
+-rw-r--r-- 1 ram  ram    37339 Mar 29  2020 README
+-rwxr-xr-x 1 ram  ram  1513583 Mar 29  2020 pgbadger
+-rw-r--r-- 1 ram  ram      250 Mar 29  2020 META.yml
+-rw-r--r-- 1 ram  ram       81 Mar 29  2020 MANIFEST
+-rw-r--r-- 1 ram  ram     2171 Mar 29  2020 Makefile.PL
+-rw-r--r-- 1 ram  ram      910 Mar 29  2020 LICENSE
+-rw-r--r-- 1 ram  ram     1487 Mar 29  2020 HACKING.md
+-rw-r--r-- 1 ram  ram      878 Mar 29  2020 CONTRIBUTING.md
+-rw-r--r-- 1 ram  ram   123694 Mar 29  2020 ChangeLog
+drwxr-xr-x 8 root root      72 Aug  1  2020 blib
+-rw-r--r-- 1 root root   30715 Dec 25 16:56 Makefile
+-rw-r--r-- 1 ram  ram      920 Dec 25 16:56 MYMETA.json
+-rw-r--r-- 1 ram  ram      592 Dec 25 16:56 MYMETA.yml
+-rw-r--r-- 1 root root       0 Dec 25 16:56 pm_to_blib
+drwxr-xr-x 2 ram  ram       25 Dec 25 16:56 doc
+
+from the README file take installation steps.
+
+INSTALLATION
+    Download the tarball from GitHub and unpack the archive as follow:
+
+            tar xzf pgbadger-11.x.tar.gz
+            cd pgbadger-11.x/
+            perl Makefile.PL
+            make && sudo make install
+
+install perl:
+=============
+https://www.perl.org/get.html#unix_like
+
+tar -xvf perlfile
+cd perl dir
+mkdir /opt/perl
+./configure --prefix=/opt/perl
+
+run below commands with root user:
+
+[root@node2 pgbadger-11.2]#/opt/ActivePerl-5.28/bin/perl Makefile.PL
+[root@node2 pgbadger-11.2]# make
+[root@node2 pgbadger-11.2]#make install
+
+chown -R postgres:postgres /opt/ActivePerl-5.26/bin/pgbadger
+
+[root@node2 pgbadger-6.4]# /opt/ActivePerl-5.26/bin/pgbadger --help
+
+[root@node2 pgbadger-6.4]# ls -ltr //opt/ActivePerl-5.28/bin/pgbadger
+-rwxrwxr-x 1 ram ram 921849 Apr 13  2015 /opt/ActivePerl-5.28/bin/pgbadger
+[root@node2 pgbadger-6.4]# chown -R postgres:postgres /opt/ActivePerl-5.28/bin/pgbadger
+
+changes in postgresql.conf file:
+================================
+
+logging_collector = on 
+log_filename = 'postgresql-%a.log' 
+log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h'
+log_checkpoints = on
+log_autovacuum_min_duration=0
+log_temp_files = 0
+log_lock_waits = on
+log_statement = 'all'
+log_connections=on
+log_disconnections=on
+log_temp_files=0;
+autovacuum = on  
+log_autovacuum_min_duration = 0 
+
+-bash-4.2$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA restart
+
+[postgres@localhost log]$ /opt/ActivePerl-5.28/bin/pgbadger -f `find /var/lib/pgsql/DATA13/log/ -name "postgresql*"` -o pgbadger2_report.html
+LOG: Ok, generating html report... 2479260 bytes of 2479260 (100.00%), queries: 30990, events: 3
+
+-bash-4.2$ pwd
+/var/lib/pgsql/DATA/pg_log
+-bash-4.2$ /opt/ActivePerl-5.26/bin/pgbadger -f `find /var/lib/pgsql/DATA/pg_log/ -name "postgresql*"` -o pgbadger_test.html
+LOG: Ok, generating html report... 6890759 bytes of 6890759 (100.00%), queries: 155691, events: 0
+
+-bash-4.2$ ls -ltrh
+total 24M
+-rw-rw-r--. 1 postgres postgres 1.1K Feb 25 17:27 test.sql
+-rw-------. 1 postgres postgres  11M Feb 25 17:28 postgresql-2021-02-25_172546.log
+-rw-------. 1 postgres postgres 6.6M Feb 25 17:29 postgresql-2021-02-25_172822.log
+-rw-rw-r--. 1 postgres postgres 846K Feb 25 17:31 pgbadger_test.html
+-bash-4.2$
+
+for query analysis we have one more report called pg_stat_statements:
+=====================================================================
+pg_stat_statements enabling:
+---------------------------
+it will count each and everything.
+
+
+enable pg_stat_statements:
+--------------------------
+in postgresql.conf file need to change below paraameter.
+
+shared_preload_libraries='pg_stat_statements'
+
+then restart postgresql services.
+
+create extension:
+----------------
+postgres=# create extension pg_stat_statements;
+CREATE EXTENSION
+
+postgres=# create extension pg_stat_statements;
+CREATE EXTENSION
+postgres=# \dx
+                                            List of installed extensions
+        Name        | Version |   Schema   |                              Description
+--------------------+---------+------------+------------------------------------------------------------------------
+ pg_stat_statements | 1.8     | public     | track planning and execution statistics of all SQL statements executed
+
+
+postgres=# select pg_stat_statements_reset();
+ pg_stat_statements_reset
+--------------------------
+postgres=# select userid,dbid,queryid,total_exec_time,calls,total_plan_time,wal_bytes from pg_stat_statements;
+ userid | dbid  |       queryid        |   total_exec_time    | calls | total_plan_time | wal_bytes
+--------+-------+----------------------+----------------------+-------+-----------------+-----------
+     10 | 16401 | -7583817157632938912 |             0.116838 |     1 |               0 |         0
+     10 | 16401 |  5084246234847151067 |             0.111736 |     1 |               0 |         0
+     10 | 16401 |  8499922294046131431 | 0.038140999999999994 |     2 |               0 |         0
+     10 | 16401 | -1739183385080879393 |             32.52815 |     1 |               0 |    263112
+     10 | 16401 | -7938580025489382844 |  0.10976799999999999 |     1 |               0 |       184
+(5 rows)
+
+postgres=# select query from pg_stat_statements where queryid='-1739183385080879393';
+                query
+-------------------------------------
+ create extension pg_stat_statements
+(1 row)
+
+****************************************************
+Replication Setup
+****************************************************
+->replicating or mirroring or copying data from one server to another server and making another copy always sync with the
+
+original copy , to avoid downtime issues/crash recovery issues, we call this as replication.
+
+->we will achive high avaibility and disaster recovery features with this replication concept.
+
+->High Availability : at any point of postgresql services should up and running or very minimal downtime.
+
+->DR(disaster recovery ) : eventhough completely your server got crashed, still you can capable to recovery the data with very minimal
+
+data loss and within very less time.
+
+->in case of services not avaibile due to one person/one server, instead of that guy another guy immeditely taking responsibility,
+
+we will call it as standby.
+
+we have 2 ways of replication:
+
+1.asynchronus replication:
+
+->each and every transaction will be copied to slave server as part of replication.
+
+->whenever we are doing any transaction immeiately it will be committed in master and then it will send to slave server,
+
+as part of this replication it will not bother about slave server acknowledgement.
+
+->this replication main moto is end of the data should be here in at least one server, if required we can sync slave server later.
+
+->eventhough slave server completely down also , there will be no impact to your master server.
+
+2.synchronus replication :
+
+->this replication main moto is always to keep in sync with slave server.
+
+->whether less data or more data alaways foucus both the servers in sync.
+
+->if you are doing one transaction, first it will not commit in master, it will goes to slave server, and commit in slave, then if slave sent
+
+successufll acknowledgement, then only that transaction will committ in master.
+
+or else it will not commit in master.
+
+->if due to any reason if transaction not committed in slave server, those transactions will be not committed in master, 
+
+completely server will be in hung state.
+
+
+->master --sync slave   --async slave (if sync slave down, here also immediate downtime, but thing immediately async slave converted as sync
+
+slave)
+
+->master --sync slave (if sync slave went down, immediate downtime for master)
+
+====================================
+types of replication
+====================================
+1.warm standby replication : taking the wal file backup from master server and copy to slave server, this will take some time.
+
+we are seeing gap/delay between master and slave.
+
+->always slave server in idle state, you can't login to slave server database.
+
+->it will be suitable only for DR purpose, not for HA.
+
+->HA :  master a , slave server b->if a went down i can make b as master, if again a comes up, i can make a as master, b as slave.
+
+->DR : only in the case a completely crashed, then only i can make b as master, later eventhough a come up, i can't make it as master.
+
+
+2.streaming replication :
+
+
+->no point of taking backup and restore, complete what ever the transaction we are doing , it will be pumped to slave server.
+
+->you can use slave server to run read only queries(Select)
+
+-HA : is possible.
+
+->DR : also possible
+
+3.multi slave replication : one master and 2 slave servers, to reduce the at least read work load on master,but not seeing that much 
+
+advantage.
+
+4.cascading replication : to reduce the overhead on master , we have cascading setup.
+
+normally our replication process will be happenig for whole server.
+
+5.logical replication : if any user/developer requested to kee their data safe only specific set tables or specific database,
+
+in that case we will use this replication.
+
+===============================
+build replication
+===============================
+pre requisties to build :
+
+
+->minimum 2 server required.
+
+->both the sides same operation system version required.
+
+->both the sides same database s/w version required.
+
+->firewall should be enabled b/w 2 nodes.
+
+->create empty DATA directoy on slave server same as master.
+
+build master server :
+
+vi postgresql.conf
+=================================
+listen_addresses = '*'
+wal_level = replica  (minimal : only usefull for server recovery,logical : it will keeps the wal files for logical replciation purpose)
+max_wal_senders = 10
+wal_keep_size = 1024  (mb)  : earlier this parameter name is wal_keep_segments (until 12)
+wal_log_hints = on (to track each and every block)
+
+after making changes need to restart services.
+
+vi pg_hba.conf
+
+host    all             all             192.168.38.134/32       trust
+host    replication     all             192.168.38.134/32       trust
+
+after making changes need to reload services.
+  
+=============================
+build slave server:
+==============================
+->make data directory empty
+
+->run basebackup by connecting to master server.
+
+-bash-4.2$ pg_basebackup -D /var/lib/pgsql/DATA/ -X fetch -h 192.168.38.133 -P -v -R
+
+
+-R will created recovery.conf file(upto 11 version, it will contains primary server connection details)
+
+-R in 12 , there will be no recovery.conf file, same entries it is keeping in postgresql.auto.conf file and to represent this server
+
+as slave server , it is creating one dummy file standby.signal.
+
+
+-bash-4.2$ cat postgresql.auto.conf
+# Do not edit this file manually!
+# It will be overwritten by the ALTER SYSTEM command.
+primary_conninfo = 'user=postgres host=192.168.38.133 port=5432'
+-bash-4.2$
+
+default value in postgresql.conf is:
+
+hot_standby = on
+
+-bash-4.2$ pg_ctl -D /var/lib/pgsql/DATA start
+
+
+replication validation:
+=======================
+from master:
+
+-bash-4.2$ ps -ef|grep sender
+postgres   6044   5970  0 19:15 ?        00:00:00 postgres: walsender postgres 192.168.38.134(42383) streaming 0/3000148
+
+
+from slave :
+
+-bash-4.2$ ps -ef|grep receiver
+postgres   3434   3428  0 19:15 ?        00:00:00 postgres: walreceiver streaming 0/3000148
+
+
+from master db level:
+
+postgres=# select * from pg_stat_replication;
+-[ RECORD 1 ]----+------------------------------
+pid              | 6085
+usesysid         | 10
+usename          | postgres
+application_name | walreceiver
+client_addr      | 192.168.38.134 
+client_hostname  |
+client_port      | 42384
+backend_start    | 2021-06-21 19:18:02.544963-07
+backend_xmin     |
+state            | streaming
+sent_lsn         | 0/3000148
+write_lsn        | 0/3000148
+flush_lsn        | 0/3000148
+replay_lsn       | 0/3000148
+write_lag        | 00:00:00.000358
+flush_lag        | 00:00:00.000358
+replay_lag       | 00:00:00.000358
+sync_priority    | 0
+sync_state       | async
+reply_time       | 2021-06-21 19:18:02.650098-07
+
+if sent_ls,write_lsn,flush_lsn,reply_lsn all 4 location numbers same means no delay b/w master and slave.
+
+->default replication is async replication.
+
+->master should not be in recovery state.
+
+postgres=# select pg_is_in_recovery();
+-[ RECORD 1 ]-----+--
+pg_is_in_recovery | f
+
+
+from slave server db level:
+
+postgres=# select pg_is_in_recovery();
+ pg_is_in_recovery
+-------------------
+ t
+
+sync status :
+
+create some objects in master, and check in salve.
+
+slave always readonly:
+
+
+postgres=# create database raj;
+ERROR:  cannot execute CREATE DATABASE in a read-only transaction
+postgres=#
+
+====================
+async testing :
+====================
+bring down slave server and run some operation, it will succesfful.
+
+=============
+sync testing:
+=============
+convert async to sync:
+
+vi postgresql.conf(master server)
+
+synchronous_standby_names = '*' 
+
+->stop salve and run some transaction in master, it will not complete, it will goes to hung state.
+
+if you cancel it, then only it will committ locally, and give you hint.
+
+
+postgres=# create database reptest;
+CREATE DATABASE
+postgres=# create database reptest2;
+^CCancel request sent
+WARNING:  canceling wait for synchronous replication due to user request
+DETAIL:  The transaction has already committed locally, but might not have been replicated to the standby.
+CREATE DATABASE
+
+if you found delay, it is acceptable, if huge data loading or vacuum process running on master, so data replication will become slow.
+
+->it will pcikup automatically
+
+->if you didn't find any error message in log file like so and so wal file not found in master pg_wal directory.
+
+if repsecitve wal file is there in archive direcoty no issue, we can copy directly,
+
+if not there means only option is slave rebuild.
+
+->multi slave:  master a, slave b,c
+
+->cascade salve  : master a-->slave b -->slave c
+
+->logical replication
+
+->failover
+
+->switchover
+
+->without rebuilding slave proceed with pg_rewind.
+
+->autofailover with EFM on EDB postgresq.
+
+
+->to promote slave servers as standalone server:
+
+
+-bash-4.2$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA promote
+waiting for server to promote.... done
+server promoted
+
+login and make sure recovery not in progress.
+
+-bash-4.2$ psql
+psql (13.3)
+Type "help" for help.
+
+postgres=# select pg_is_in_recovery();
+ pg_is_in_recovery
+-------------------
+ f
+(1 row)
+
+
+==================================================
+failover: if master server went down, we need to promote slave server as stand alone master.
+
+switchover : making master as slave, slave as master.
+
+failback : if master went down, slave will acts as stand alone master, if again old master comes up, old master is master, old slave is
+
+slave.
+
+master : 192.168.38.133
+slave : 192.168.38.134
+
+if 192.168.38.133 went down.
+
+192.168.38.134 : stand alone server
+
+failover :
+==========
+once master services down, need to promote slave as a stadlone server.
+
+-bash-4.2$ /usr/local/pgsql/bin/pg_ctl -D /var/lib/pgsql/DATA promote
+waiting for server to promote.... done
+server promoted
+
+
+after promotion we have done some operation in new standlone master.
+
+if again 192.168.38.133 comes up can we make directlry as it as master.
+
+as already more transactions in 192.168.38.134 server, we can simply add 192.168.38.133 as master.
+
+first we need to sync 133 with 134. for syncing option is pg_basebackup, to save time postgresql given option called pg_reqind.
+
+it will only copy modified blocks b/w both the nodes.
+
+->wal_log_hints parameters should be on
+
+to perfrom pg_rewind target sever should be smooth shut down.
+
+-bash-4.2$ pg_ctl -D $PGDATA start
+pg_ctl: another server might be running; trying to start server anyway
+waiting for server to start....    4146 2021-06-24 18:18:03 PDTLOG:  redirecting log output to logging collector process
+    4146 2021-06-24 18:18:03 PDTHINT:  Future log output will appear in directory "log".
+ done
+server started
+-bash-4.2$ pg_ctl -D $PGDATA stop
+waiting for server to shut down.... done
+server stopped
+-bash-4.2$
+
+
+-bash-4.2$ pg_rewind --target-pgdata=/var/lib/pgsql/DATA/ --source-server='user=postgres dbname=postgres host=192.168.38.134'
+pg_rewind: servers diverged at WAL location 4/13006AE8 on timeline 1
+pg_rewind: rewinding from last common checkpoint at 4/13005370 on timeline 1
+pg_rewind: Done!
+-bash-4.2$
+-bash-4.2$ pg_ctl -D $PGDATA start
+waiting for server to start....    4200 2021-06-24 18:20:14 PDTLOG:  redirecting log output to logging collector process
+    4200 2021-06-24 18:20:14 PDTHINT:  Future log output will appear in directory "log".
+ done
+server started
+
+do validation for extra databases:
+
+                                  List of databases
+   Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges
+-----------+----------+----------+-------------+-------------+-----------------------
+ db1       | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+ db2       | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+ db3       | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+
+
+->we will handvoer to app team
+
+->slowly we can build slave server.
+
+=================================================================
+for autofailover in postgresql we have 3rd party s/w.
+
+1.repmgr
+2.pg-auto-failover(common connection string given)
+3.patroni
+
+on top of repmgr -->pgpool will have vip concept-->always vip will be assigned to master server.
+
+=====================================
+ucarp services :
+
+master : 192.168.38.133
+slave  : 192.168.38.134
+VIP    : 192.168.38.135 (application team will use)
+
+script should run form 134 by making ssh to 133.
+
+ssh 192.168.38.133
+->fails immeditealy run promote command on 134
+->if ssh succesfull test below commands.
+
+ping master server ip (networking working or not)
+
+pg_ctl status should up (services up or not)
+or
+cd $PGDATA
+ls -ltr postmaster.pid should exists
+
+->if postmaster.pid file not existed , automatically run promote command in 134.
+
+-ucrap services will take care about VIP, always VIP will be assigned to master server.
+
+->ucarp services script, we will give psql command , it will run select pg_is_in_recovery(), if it is a true , it will nto assign VIP,
+if it is a false means, it will assign vip.
+
+=========================================
+EDB released tool called Enterprise Faailover Manger, this is lincended product, we can use this on top of open source s/w as well.
+
+EDB Postgresql installation:
+============================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

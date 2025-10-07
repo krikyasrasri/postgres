@@ -1,0 +1,38 @@
+***********Tablespace*************
+CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
+
+******To fond the TS names in database***********
+SELECT spcname FROM pg_tablespace;
+
+select * from pg_tablespace;
+
+select spcname ,pg_tablespace_location(oid) from pg_tablespace;
+
+SELECT d.datname as "Name",
+       r.rolname as "Owner",
+       pg_catalog.pg_encoding_to_char(d.encoding) as "Encoding",
+       pg_catalog.shobj_description(d.oid, 'pg_database') as "Description",
+       t.spcname as "Tablespace"
+FROM pg_catalog.pg_database d
+  JOIN pg_catalog.pg_roles r ON d.datdba = r.oid
+  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid
+ORDER BY 1;
+
+To find list of tabelspace in database use \db+
+
+***************
+
+Create the Schema in database  
+
+Create schema sravanthi;
+
+To see the schemas in postgress "\dn"
+
+select schema_name from information_schema.schemata;
+
+select * from pg_catalog.pg_namespace;
+
+*********To see the table description ***********
+
+\d <table name>
+
