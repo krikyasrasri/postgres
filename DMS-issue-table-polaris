@@ -1,0 +1,153 @@
+voucher.discount_details
+voucher.discount
+public.read_only_ecosystem_setting
+transition.transition_notes
+
+
+
+SELECT  'ALTER TABLE ' || quote_ident(n.nspname) || '.' || 
+            quote_ident(t.relname) || ' DISABLE TRIGGER ALL;' AS cmd
+        FROM pg_class t
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE t.relkind = 'r'
+        AND n.nspname NOT IN ('pg_catalog', 'information_schema'));
+
+
+
+
+SELECT 'ALTER TABLE ' || schemaname || '.' || tablename || ' ENABLE TRIGGER ALL;'
+FROM pg_tables
+ORDER BY tablename;
+
+
+
+SELECT 'TRUNCATE TABLE ' || schemaname || '.' || tablename || ' CASCADE;'
+FROM pg_tables
+ORDER BY tablename;
+
+
+
+2026-01-07T18:42:33 [TASK_MANAGER    ]W:  Table 'voucher'.'discount' was errored/suspended (subtask 1 thread 1). Failed (retcode -1) to execute statement; RetCode: SQL_ERROR  SqlState: 0A000 NativeError: 1 Message: ERROR: cannot truncate a table referenced in a foreign key constraint; Error while executing the query; Failed to truncate table voucher.discount; Handling new table 'voucher'.'discount' failed'transition_group_v2' failedgs' failed  (replicationtask.c:3081)
+
+
+
+SELECT 
+    n.nspname AS schema_name,
+    t.relname AS table_name,
+    conname AS constraint_name
+FROM pg_constraint c
+JOIN pg_namespace n ON n.oid = c.connamespace
+JOIN pg_class t ON t.oid = c.conrelid
+WHERE c.confrelid = (
+    SELECT oid 
+    FROM pg_class 
+)
+AND c.contype = 'f';
+
+
+ ALTER TABLE transition.transition_group_v2 DISABLE TRIGGER ALL;
+ 
+ 
+ Select max((octet_length(<COL_NAME>))/(1024.0)) as "Size in KB" from ;
+ 
+ 
+ 
+ TRUNCATE TABLE voucher.discount CASCADE;
+
+
+
+ 
+ ================================
+ 
+ Drop the  foegin key constrans:
+ 
+
+ 
+ SELECT
+    'ALTER TABLE ' || tc.table_schema || '.' || tc.table_name ||
+    ' DROP CONSTRAINT ' || tc.constraint_name || ';' AS drop_statement
+FROM information_schema.table_constraints AS tc
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema IN ('pricelist', 'gtmitem')
+ORDER BY tc.table_schema, tc.table_name;
+
+
+                                          drop_statement
+---------------------------------------------------------------------------------------------------
+ ALTER TABLE pricelist.promo_request_configuration DROP CONSTRAINT fk_promo_request_configuration;
+ ALTER TABLE pricelist.promotion_entry_tag DROP CONSTRAINT fk_tag;
+ ALTER TABLE pricelist.promotion_entry_tag DROP CONSTRAINT fk_promotion_entry;
+(3 rows)
+
+TRUNCATE TABLE : 
+
+SELECT 'TRUNCATE TABLE ' || schemaname || '.' || tablename || ' CASCADE;'
+FROM pg_tables
+ORDER BY tablename;
+
+
+ SELECT
+    'ALTER TABLE ' || tc.table_schema || '.' || tc.table_name ||
+    ' ADD CONSTRAINT ' || tc.constraint_name || ';' AS drop_statement
+FROM information_schema.table_constraints AS tc
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema IN ('pricelist', 'gtmitem')
+ORDER BY tc.table_schema, tc.table_name;
+
+
+ ALTER TABLE pricelist.promo_request_configuration ADD CONSTRAINT fk_promo_request_configuration;
+ ALTER TABLE pricelist.promotion_entry_tag ADD CONSTRAINT fk_tag;
+ ALTER TABLE pricelist.promotion_entry_tag ADD CONSTRAINT fk_promotion_entry;
+ 
+ 
+ Create constrains: 
+ 
+ SELECT
+    tc.table_schema,
+    tc.table_name,
+    tc.constraint_name,
+    'ALTER TABLE ' || tc.table_schema || '.' || tc.table_name || 
+    ' ADD CONSTRAINT ' || tc.constraint_name || 
+    ' FOREIGN KEY (' || kcu.column_name || ')' ||
+    ' REFERENCES ' || ccu.table_schema || '.' || ccu.table_name || 
+    ' (' || ccu.column_name || ')' ||
+    CASE 
+        WHEN rc.delete_rule != 'NO ACTION' THEN ' ON DELETE ' || rc.delete_rule
+        ELSE ''
+    END ||
+    CASE 
+        WHEN rc.update_rule != 'NO ACTION' THEN ' ON UPDATE ' || rc.update_rule
+        ELSE ''
+    END || ';' AS recreate_statement
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+  AND tc.table_schema = kcu.table_schema
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+  AND ccu.table_schema = tc.table_schema
+JOIN information_schema.referential_constraints AS rc
+  ON tc.constraint_name = rc.constraint_name
+  AND tc.table_schema = rc.constraint_schema
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema IN ('pricelist', 'gtmitem','voucher','transition','public')
+ORDER BY tc.table_schema, tc.table_name;
+
+
+
+
+
+ALTER TABLE pricelist.promo_request_configuration ADD CONSTRAINT fk_promo_request_configuration FOREIGN KEY (promo_request_id) REFERENCES pricelist.promo_request (id);
+ALTER TABLE pricelist.promotion_entry_tag ADD CONSTRAINT fk_promotion_entry FOREIGN KEY (promotion_entry_id) REFERENCES pricelist.promotion_entry (id);
+ALTER TABLE pricelist.promotion_entry_tag ADD CONSTRAINT fk_tag FOREIGN KEY (tag_id) REFERENCES pricelist.tag (id);
+ALTER TABLE public.featuresets_eoc_code ADD CONSTRAINT featuresets_eoc_code_featureset_id_fkey FOREIGN KEY (featureset_id) REFERENCES public.featuresets (id);
+ALTER TABLE public.non_usage_events ADD CONSTRAINT fk_non_usage_events_resource FOREIGN KEY (resource_id) REFERENCES public.resource (id);
+ALTER TABLE public.product_commerce_detail ADD CONSTRAINT product_commerce_detail_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products (id);
+ALTER TABLE public.product_productline_int ADD CONSTRAINT product_productline_int_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products (id);
+ALTER TABLE public.product_productline_int ADD CONSTRAINT product_productline_int_product_line_id_fkey FOREIGN KEY (product_line_id) REFERENCES public.product_line (id);
+ALTER TABLE public.products ADD CONSTRAINT fk_read_only_ecosystem FOREIGN KEY (read_only_ecosystem_id) REFERENCES public.read_only_ecosystem_settings (id);
+ALTER TABLE transition.transition_notes ADD CONSTRAINT fk_transition_group_id FOREIGN KEY (transition_group_id) REFERENCES transition.transition_group_v2 (id) ON UPDATE CASCADE;
+ALTER TABLE voucher.discount ADD CONSTRAINT fk_voucher_request_id FOREIGN KEY (voucher_request_id) REFERENCES voucher.voucher_request (id);
+ALTER TABLE voucher.discount ADD CONSTRAINT fk_manual_discount_link_id FOREIGN KEY (manual_discount_link_id) REFERENCES voucher.voucher_request (id);
+ALTER TABLE voucher.discount_details ADD CONSTRAINT voucher_discount_details_fk FOREIGN KEY (discount_id) REFERENCES voucher.discount (id);
+ALTER TABLE voucher.voucher_configuration ADD CONSTRAINT fk_voucher_voucher_id FOREIGN KEY (voucher_id) REFERENCES voucher.voucher_request (id) ON DELETE CASCADE;
